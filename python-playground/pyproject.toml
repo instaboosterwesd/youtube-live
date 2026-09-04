@@ -1,0 +1,8 @@
+[project]
+name = "python-playground"
+version = "0.1.0"
+description = "A minimal space for simple Python scripts and experiments."
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 88
