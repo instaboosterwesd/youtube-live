@@ -1,0 +1,34 @@
+ated symlink /etc/systemd/system/sysinit.target.wants/systemd-timesyncd.service → /lib/systemd/system/systemd-timesyncd.service.
+Setting up procps (2:4.0.2-3) ...
+Setting up libpam-systemd:amd64 (252.39-1~deb12u2) ...
+debconf: unable to initialize frontend: Dialog
+debconf: (No usable dialog-like program is installed, so the dialog based frontend cannot be used. at /usr/share/perl5/Debconf/FrontEnd/Dialog.pm line 78.)
+debconf: falling back to frontend: Readline
+Setting up ncurses-term (6.4-4) ...
+Setting up openssh-server (1:9.2p1-2+deb12u10) ...
+debconf: unable to initialize frontend: Dialog
+debconf: (No usable dialog-like program is installed, so the dialog based frontend cannot be used. at /usr/share/perl5/Debconf/FrontEnd/Dialog.pm line 78.)
+debconf: falling back to frontend: Readline
+
+Creating config file /etc/ssh/sshd_config with new version
+Creating SSH2 RSA key; this may take some time ...
+3072 SHA256:H+5BRYgAovUqzFsfRC7JFwrpArfTi6mhFoAkSLjaQjM root@f6668abbffd6 (RSA)
+Creating SSH2 ECDSA key; this may take some time ...
+256 SHA256:OhLTZRH/xN3BRJDS2WsKh8E25cwr1ibhWbVhwLTsNOc root@f6668abbffd6 (ECDSA)
+Creating SSH2 ED25519 key; this may take some time ...
+256 SHA256:99NXXoK2FMWparbUtfDBe1lEBzGw6TCmzkwiF1rX4io root@f6668abbffd6 (ED25519)
+invoke-rc.d: could not determine current runlevel
+invoke-rc.d: policy-rc.d denied execution of start.
+Created symlink /etc/systemd/system/sshd.service → /lib/systemd/system/ssh.service.
+Created symlink /etc/systemd/system/multi-user.target.wants/ssh.service → /lib/systemd/system/ssh.service.
+Setting up dbus-user-session (1.14.10-1~deb12u1) ...
+Processing triggers for libc-bin (2.36-9+deb12u14) ...
+Processing triggers for dbus (1.14.10-1~deb12u1) ...
+Synchronizing state of ssh.service with SysV service script with /lib/systemd/systemd-sysv-install.
+Executing: /lib/systemd/systemd-sysv-install enable ssh
+System has not been booted with systemd as init system (PID 1). Can't operate.
+Failed to connect to bus: Host is down
+System has not been booted with systemd as init system (PID 1). Can't operate.
+Failed to connect to bus: Host is down
+bash: ss: command not found
+admin@f6668abbffd6:~$ 
