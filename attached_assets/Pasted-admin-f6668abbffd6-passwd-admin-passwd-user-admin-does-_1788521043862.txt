@@ -1,0 +1,3 @@
+admin@f6668abbffd6:~$ passwd admin
+passwd: user 'admin' does not exist
+admin@f6668abbffd6:~$ 
