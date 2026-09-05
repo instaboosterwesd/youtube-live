@@ -1,0 +1,23 @@
+The request could not be completed. Request URL https://reversebypass.in/api/licenses Request Method GET Status Code 502 Bad Gateway Remote Address [2606:4700:3032::ac43:9865]:443 Referrer Policy strict-origin-when-cross-origin alt-svc h3=":443"; ma=86400 cache-control private, max-age=0, no-store, no-cache, must-revalidate, post-check=0, pre-check=0 cf-ray a36608aac88ece19-SIN content-length 6444 content-type text/html; charset=UTF-8 date Sat, 05 Sep 2026 14:48:16 GMT expires Thu, 01 Jan 1970 00:00:01 GMT priority u=1,i referrer-policy same-origin retry-after 60 server cloudflare server-timing cfExtPri x-frame-options SAMEORIGIN :authority reversebypass.in :method GET :path /api/licenses :scheme https accept / accept-encoding gzip, deflate, br, zstd accept-language en-IN,en-GB;q=0.9,en-US;q=0.8,en;q=0.7,hi;q=0.6,ee;q=0.5 content-type application/json cookie auth_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiItUC0zemdCN1ZTNk00RHZpVS0xOCIsInVzZXJuYW1lIjoiZGV2diIsImVtYWlsIjoiZGV2dkBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3ODY3OTQ5NjAsImV4cCI6MTc4OTM4Njk2MH0.thzC_666qvkaTBVv7Zfvpsuh8UIobFTzTo2O2WdGmYg priority u=1, i referer https://reversebypass.in/owner sec-ch-ua "Chromium";v="152", "Not?A_Brand";v="24", "Google Chrome";v="152" sec-ch-ua-mobile ?0 sec-ch-ua-platform "Windows" sec-fetch-dest empty sec-fetch-mode cors sec-fetch-site same-origin user-agent Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 x-owner-password traderp1wer
+
+Free
+5 minutes ago
+यह 502 Firebase/production server layer से आ रहा है, frontend से नहीं। Screenshot में password दिखाई दे रहा है—मैं उसे दोबारा उपयोग या प्रदर्शित नहीं करूँगा। पहले Railway runtime logs और API configuration check करके बताता हूँ कि OWNER_PASSWORD तो set है, लेकिन Firebase connection/permission कहाँ टूट रही है।
+
+
+
+Show less
+
+Opened deployment-logs.md
+
+Downloaded a file
+
+Searched for "FIREBASE_DATABASE_URL|O…"
+502 का सबसे संभावित कारण अब दिख रहा है: Railway में OWNER_PASSWORD set है, लेकिन FIREBASE_DATABASE_URL Railway Variables में नहीं हो सकता। Source code /api/licenses के लिए Firebase URL अनिवार्य करता है; missing/incorrect URL पर यही 502 लौटता है। मैं production logs और Firebase endpoint दोनों से इसे confirm कर रहा हूँ।
+
+
+
+5 actions
+
+Worked for 37 seconds
+You've reached your daily free quota limit. It will reset at 12:00 AM UTC.
