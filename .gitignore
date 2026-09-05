@@ -48,3 +48,9 @@ Thumbs.db
 .cache/
 .local/
 attached_assets/ytvid_-M47B7wsm7c_1080p60.mp4
+
+# Keep local media out of the public source repository
+*.mp4
+*.mov
+*.webm
+*.mkv
