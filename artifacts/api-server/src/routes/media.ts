@@ -1,16 +1,19 @@
 import { createWriteStream } from "node:fs";
 import { mkdir, readdir, stat, unlink } from "node:fs/promises";
-import { spawn } from "node:child_process";
 import path from "node:path";
 import { pipeline } from "node:stream/promises";
 import { Router, type IRouter } from "express";
 import { randomUUID } from "node:crypto";
 import { DownloadYoutubeVideoBody, DownloadYoutubeVideoResponse } from "@workspace/api-zod";
+import youtubeDl, { create as createYoutubeDl } from "youtube-dl-exec";
+import ffmpegPath from "ffmpeg-static";
 
 const router: IRouter = Router();
 const mediaDir = path.resolve(process.cwd(), "attached_assets", "live-media");
 const maxUploadBytes = 1.5 * 1024 * 1024 * 1024;
-const ytDlpCommand = process.env.YT_DLP_BIN?.trim() || "yt-dlp";
+const youtubeDownloader = process.env.YT_DLP_BIN?.trim()
+  ? createYoutubeDl(process.env.YT_DLP_BIN.trim())
+  : youtubeDl;
 
 function getMediaName(rawName: string): string {
   const base = path.basename(rawName).replace(/[^a-zA-Z0-9._-]/g, "-");
@@ -54,29 +57,23 @@ async function downloadYoutubeVideo(url: string, fileId: string): Promise<{ path
   await mkdir(mediaDir, { recursive: true });
   const outputTemplate = path.join(mediaDir, `${fileId}.%(ext)s`);
   return new Promise((resolve, reject) => {
-    const child = spawn(ytDlpCommand, [
-      "--no-playlist",
-      "--no-warnings",
-      "--no-progress",
-      "--socket-timeout", "30",
-      "--extractor-args", "youtube:player_client=android",
-      "--format", "bestvideo*+bestaudio/best",
-      "--merge-output-format", "mp4",
-      "--output", outputTemplate,
-      "--print-json",
-      url,
-    ], { stdio: ["ignore", "pipe", "pipe"] });
+    const child = youtubeDownloader.exec(url, {
+      noPlaylist: true,
+      noWarnings: true,
+      noProgress: true,
+      socketTimeout: 30,
+      extractorArgs: "youtube:player_client=android",
+      format: "bestvideo*+bestaudio/best",
+      mergeOutputFormat: "mp4",
+      ffmpegLocation: ffmpegPath ?? undefined,
+      output: outputTemplate,
+      printJson: true,
+    });
     let stdout = "";
     let stderr = "";
     child.stdout.on("data", (chunk: Buffer) => { stdout += chunk.toString(); });
     child.stderr.on("data", (chunk: Buffer) => { stderr += chunk.toString(); });
-    child.on("error", (error: NodeJS.ErrnoException) => {
-      if (error.code === "ENOENT") {
-        reject(new Error("The server is missing yt-dlp. Install yt-dlp and ffmpeg, then redeploy."));
-        return;
-      }
-      reject(error);
-    });
+    child.on("error", reject);
     child.on("close", async (code) => {
       if (code !== 0) {
         reject(new Error(stderr.trim().split("\n").filter(Boolean).at(-1) || "YouTube download failed."));
@@ -153,9 +150,13 @@ router.post("/media/youtube-download", async (req, res): Promise<void> => {
       duration: result.duration,
     }));
   } catch (error) {
-    const message = error instanceof Error ? error.message : "The YouTube video could not be downloaded.";
+    const rawMessage = error instanceof Error ? error.message : "The YouTube video could not be downloaded.";
+    const missingDownloader = rawMessage.includes("ENOENT") || rawMessage.includes("yt-dlp");
+    const message = missingDownloader
+      ? "The bundled YouTube downloader is unavailable. Redeploy the latest build and try again."
+      : rawMessage;
     req.log.warn({ error: message }, "YouTube download failed");
-    res.status(message.includes("missing yt-dlp") ? 503 : 400).json({ error: message });
+    res.status(missingDownloader ? 503 : 400).json({ error: message });
   }
 });
 

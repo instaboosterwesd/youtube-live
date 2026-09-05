@@ -67,6 +67,8 @@ async function buildAll() {
       "@google/*",
       "googleapis",
       "firebase-admin",
+      "youtube-dl-exec",
+      "ffmpeg-static",
       "@parcel/watcher",
       "@sentry/profiling-node",
       "@tree-sitter/*",

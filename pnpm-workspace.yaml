@@ -71,8 +71,10 @@ autoInstallPeers: false
 onlyBuiltDependencies:
   - '@swc/core'
   - esbuild
+  - ffmpeg-static
   - msw
   - unrs-resolver
+  - youtube-dl-exec
 
 overrides:
   # replit uses linux-x64 only, we can exclude all other platforms
