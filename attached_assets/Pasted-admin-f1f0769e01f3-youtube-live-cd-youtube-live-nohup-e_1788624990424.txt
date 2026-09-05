@@ -1,0 +1,70 @@
+admin@f1f0769e01f3:~/youtube-live$ cd ~/youtube-live
+
+nohup env NODE_ENV=production PORT=8081 OWNER_PASSWORD="$OWNER_PASSWORD" \
+  pnpm --filter @workspace/api-server run start \
+  > ~/youtube-live/api.log 2>&1 &
+[3] 3014
+admin@f1f0769e01f3:~/youtube-live$ sleep 3
+tail -20 ~/youtube-live/api.log
+[3]+  Exit 1                  nohup env NODE_ENV=production PORT=8081 OWNER_PASSWORD="$OWNER_PASSWORD" pnpm --filter @workspace/api-server run start > ~/youtube-live/api.log 2>&1
+nohup: ignoring input
+
+> @workspace/api-server@0.0.0 start /root/youtube-live/artifacts/api-server
+> node --enable-source-maps ./dist/index.mjs
+
+{"level":50,"time":1788624858746,"pid":3027,"hostname":"f1f0769e01f3","err":{"type":"Error","message":"listen EADDRINUSE: address already in use :::8081","stack":"Error: listen EADDRINUSE: address already in use :::8081\n    at Server.setupListenHandle [as _listen2] (node:net:2324:16)\n    at listenInCluster (node:net:2433:12)\n    at Server.listen (node:net:2558:7)\n    at app2.listen (/root/youtube-live/node_modules/.pnpm/express@5.2.1/node_modules/express/lib/application.js:605:24)\n    at <anonymous> (/root/youtube-live/artifacts/api-server/src/index.ts:18:5)\n    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)\n    at async node:internal/modules/esm/loader:647:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)","code":"EADDRINUSE","errno":-98,"syscall":"listen","address":"::","port":8081},"msg":"Error listening on port"}
+/root/youtube-live/artifacts/api-server:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @workspace/api-server@0.0.0 start: `node --enable-source-maps ./dist/index.mjs`
+Exit status 1
+admin@f1f0769e01f3:~/youtube-live$ Server listening
+port: 8081
+bash: Server: command not found
+bash: port:: command not found
+admin@f1f0769e01f3:~/youtube-live$ curl -sS -o /tmp/owner-check.json \
+  -w "HTTP status: %{http_code}\n" \
+  -H "X-Owner-Password: $OWNER_PASSWORD" \
+  http://127.0.0.1:8081/api/licenses
+
+cat /tmp/owner-check.json
+HTTP status: 401
+admin@f1f0769e01f3:~/youtube-live$ PIDS="$(ps -eo pid=,args= | awk '$0 ~ /node .*dist\/index\.mjs/ {print $1}')" /node .*dist\/index\.mjs/ {print $1}'
+
+echo "Stopping API PIDs: $PIDS"
+
+if [ -n "$PIDS" ]; then
+  kill $PIDS
+fi
+
+sleep 2
+bash: ps: command not found
+Stopping API PIDs: 
+admin@f1f0769e01f3:~/youtube-live$ ps -eo pid=,args= | awk '$0 ~ /node .*dist\/index\.mjs/ {print}'
+bash: ps: command not found
+admin@f1f0769e01f3:~/youtube-live$ read -rsp "Owner password: " OWNER_PASSWORD
+echo
+Owner password: 
+admin@f1f0769e01f3:~/youtube-live$ cd ~/youtube-live
+
+nohup env NODE_ENV=production PORT=8081 OWNER_PASSWORD="$OWNER_PASSWORD" \
+  pnpm --filter @workspace/api-server run start \
+  > ~/youtube-live/api.log 2>&1 &
+[3] 3051
+admin@f1f0769e01f3:~/youtube-live$ sleep 3
+tail -20 ~/youtube-live/api.log
+[3]+  Exit 1                  nohup env NODE_ENV=production PORT=8081 OWNER_PASSWORD="$OWNER_PASSWORD" pnpm --filter @workspace/api-server run start > ~/youtube-live/api.log 2>&1
+nohup: ignoring input
+
+> @workspace/api-server@0.0.0 start /root/youtube-live/artifacts/api-server
+> node --enable-source-maps ./dist/index.mjs
+
+{"level":50,"time":1788624958591,"pid":3064,"hostname":"f1f0769e01f3","err":{"type":"Error","message":"listen EADDRINUSE: address already in use :::8081","stack":"Error: listen EADDRINUSE: address already in use :::8081\n    at Server.setupListenHandle [as _listen2] (node:net:2324:16)\n    at listenInCluster (node:net:2433:12)\n    at Server.listen (node:net:2558:7)\n    at app2.listen (/root/youtube-live/node_modules/.pnpm/express@5.2.1/node_modules/express/lib/application.js:605:24)\n    at <anonymous> (/root/youtube-live/artifacts/api-server/src/index.ts:18:5)\n    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)\n    at async node:internal/modules/esm/loader:647:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)","code":"EADDRINUSE","errno":-98,"syscall":"listen","address":"::","port":8081},"msg":"Error listening on port"}
+/root/youtube-live/artifacts/api-server:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @workspace/api-server@0.0.0 start: `node --enable-source-maps ./dist/index.mjs`
+Exit status 1
+admin@f1f0769e01f3:~/youtube-live$ curl -sS -o /tmp/owner-check.json \
+  -w "HTTP status: %{http_code}\n" \
+  -H "X-Owner-Password: $OWNER_PASSWORD" \
+  http://127.0.0.1:8081/api/licenses
+
+cat /tmp/owner-check.json
+HTTP status: 401
