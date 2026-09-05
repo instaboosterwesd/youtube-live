@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Live Control Room"
+description = "A local live-stream control room for managing channels, videos, groups, stream keys, and dashboard analytics with a simple admin login."
+version = "1.0.0"
+id = "artifacts/live"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 26180
+
+[services.development]
+run = "pnpm --filter @workspace/live run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/live", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/live/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "26180"
+BASE_PATH = "/"
