@@ -1,9 +1,10 @@
 import { createWriteStream } from "node:fs";
-import { mkdir, readdir, stat, unlink } from "node:fs/promises";
+import { mkdir, readdir, stat, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pipeline } from "node:stream/promises";
 import { Router, type IRouter } from "express";
 import { randomUUID } from "node:crypto";
+import os from "node:os";
 import { DownloadYoutubeVideoBody, DownloadYoutubeVideoResponse } from "@workspace/api-zod";
 import youtubeDl, { create as createYoutubeDl } from "youtube-dl-exec";
 import ffmpegPath from "ffmpeg-static";
@@ -14,6 +15,28 @@ const maxUploadBytes = 1.5 * 1024 * 1024 * 1024;
 const youtubeDownloader = process.env.YT_DLP_BIN?.trim()
   ? createYoutubeDl(process.env.YT_DLP_BIN.trim())
   : youtubeDl;
+let youtubeCookiesFilePromise: Promise<string | undefined> | undefined;
+
+async function resolveYoutubeCookiesFile(): Promise<string | undefined> {
+  const configuredFile = process.env.YOUTUBE_COOKIES_FILE?.trim();
+  if (configuredFile) return configuredFile;
+
+  const encodedCookies = process.env.YOUTUBE_COOKIES_B64?.trim();
+  if (!encodedCookies) return undefined;
+
+  if (!youtubeCookiesFilePromise) {
+    youtubeCookiesFilePromise = (async () => {
+      const cookiesFile = path.join(os.tmpdir(), "youtube-cookies.txt");
+      await writeFile(cookiesFile, Buffer.from(encodedCookies, "base64"), { mode: 0o600 });
+      return cookiesFile;
+    })().catch((error) => {
+      youtubeCookiesFilePromise = undefined;
+      throw error;
+    });
+  }
+
+  return youtubeCookiesFilePromise;
+}
 
 function getMediaName(rawName: string): string {
   const base = path.basename(rawName).replace(/[^a-zA-Z0-9._-]/g, "-");
@@ -56,6 +79,7 @@ function validateYoutubeUrl(rawUrl: string): string {
 async function downloadYoutubeVideo(url: string, fileId: string): Promise<{ path: string; title: string; duration: string }> {
   await mkdir(mediaDir, { recursive: true });
   const outputTemplate = path.join(mediaDir, `${fileId}.%(ext)s`);
+  const cookiesFile = await resolveYoutubeCookiesFile();
   return new Promise((resolve, reject) => {
     const flags = ({
       noPlaylist: true,
@@ -66,6 +90,7 @@ async function downloadYoutubeVideo(url: string, fileId: string): Promise<{ path
       format: "bestvideo*+bestaudio/best",
       mergeOutputFormat: "mp4",
       ffmpegLocation: ffmpegPath ?? undefined,
+      cookies: cookiesFile,
       output: outputTemplate,
       printJson: true,
     } as unknown) as Parameters<typeof youtubeDownloader.exec>[1];
@@ -154,11 +179,14 @@ router.post("/media/youtube-download", async (req, res): Promise<void> => {
     const rawMessage = error instanceof Error ? error.message : "The YouTube video could not be downloaded.";
     const errorCode = error instanceof Error ? (error as NodeJS.ErrnoException).code : undefined;
     const missingDownloader = errorCode === "ENOENT" || rawMessage.includes("spawn yt-dlp ENOENT");
+    const requiresYoutubeCookies = /sign in to confirm|not a bot|use --cookies|please sign in/i.test(rawMessage);
     const message = missingDownloader
       ? "The bundled YouTube downloader is unavailable. Redeploy the latest build and try again."
+      : requiresYoutubeCookies
+        ? "YouTube requires authentication for this server. Configure YOUTUBE_COOKIES_FILE or the YOUTUBE_COOKIES_B64 secret in Railway, then redeploy."
       : rawMessage;
     req.log.warn({ error: message }, "YouTube download failed");
-    res.status(missingDownloader ? 503 : 400).json({ error: message });
+    res.status(missingDownloader || requiresYoutubeCookies ? 503 : 400).json({ error: message });
   }
 });
 
