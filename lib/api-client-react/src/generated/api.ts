@@ -20,11 +20,21 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  CreateLicenseInput,
+  DeleteLicenseResult,
   HealthStatus,
+  LicenseAccess,
+  LicenseClientInput,
+  LicenseListResponse,
+  LicenseWorkspaceResponse,
   MediaUploadResponse,
+  RenewLicenseForUserInput,
+  RenewLicenseInput,
+  SaveLicenseWorkspaceInput,
   StreamControlResponse,
   StreamStartInput,
   StreamStopInput,
+  WorkspaceSaveResponse,
   YoutubeDownloadInput,
   YoutubeDownloadResponse
 } from './api.schemas';
@@ -571,5 +581,580 @@ export const useDownloadYoutubeVideo = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getDownloadYoutubeVideoMutationOptions(options));
+    }
+
+export const getListLicensesUrl = () => {
+
+
+
+
+  return `/api/licenses`
+}
+
+/**
+ * @summary List licenses for the owner
+ */
+export const listLicenses = async ( options?: Parameters<typeof customFetch>[1]): Promise<LicenseListResponse> => {
+
+  return customFetch<LicenseListResponse>(getListLicensesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListLicensesQueryKey = () => {
+    return [
+    `/api/licenses`
+    ] as const;
+    }
+
+
+export const getListLicensesQueryOptions = <TData = Awaited<ReturnType<typeof listLicenses>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listLicenses>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListLicensesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listLicenses>>> = ({ signal }) => listLicenses({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listLicenses>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListLicensesQueryResult = NonNullable<Awaited<ReturnType<typeof listLicenses>>>
+export type ListLicensesQueryError = ErrorType<void>
+
+
+/**
+ * @summary List licenses for the owner
+ */
+
+export function useListLicenses<TData = Awaited<ReturnType<typeof listLicenses>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listLicenses>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListLicensesQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateLicenseUrl = () => {
+
+
+
+
+  return `/api/licenses`
+}
+
+/**
+ * @summary Create a license
+ */
+export const createLicense = async (createLicenseInput: CreateLicenseInput, options?: Parameters<typeof customFetch>[1]): Promise<LicenseAccess> => {
+
+  return customFetch<LicenseAccess>(getCreateLicenseUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(createLicenseInput)
+  }
+);}
+
+
+
+
+
+export const getCreateLicenseMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createLicense>>, TError,{data: BodyType<CreateLicenseInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createLicense>>, TError,{data: BodyType<CreateLicenseInput>}, TContext> => {
+
+const mutationKey = ['createLicense'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createLicense>>, {data: BodyType<CreateLicenseInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createLicense(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateLicenseMutationResult = NonNullable<Awaited<ReturnType<typeof createLicense>>>
+    export type CreateLicenseMutationBody = BodyType<CreateLicenseInput>
+    export type CreateLicenseMutationError = ErrorType<void>
+
+    /**
+ * @summary Create a license
+ */
+export const useCreateLicense = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createLicense>>, TError,{data: BodyType<CreateLicenseInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createLicense>>,
+        TError,
+        {data: BodyType<CreateLicenseInput>},
+        TContext
+      > => {
+      return useMutation(getCreateLicenseMutationOptions(options));
+    }
+
+export const getDeleteLicenseUrl = (licenseId: string,) => {
+
+
+
+
+  return `/api/licenses/${licenseId}`
+}
+
+/**
+ * @summary Delete a license and its workspace data
+ */
+export const deleteLicense = async (licenseId: string, options?: Parameters<typeof customFetch>[1]): Promise<DeleteLicenseResult> => {
+
+  return customFetch<DeleteLicenseResult>(getDeleteLicenseUrl(licenseId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteLicenseMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteLicense>>, TError,{licenseId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteLicense>>, TError,{licenseId: string}, TContext> => {
+
+const mutationKey = ['deleteLicense'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteLicense>>, {licenseId: string}> = (props) => {
+          const {licenseId} = props ?? {};
+
+          return  deleteLicense(licenseId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteLicenseMutationResult = NonNullable<Awaited<ReturnType<typeof deleteLicense>>>
+
+    export type DeleteLicenseMutationError = ErrorType<void>
+
+    /**
+ * @summary Delete a license and its workspace data
+ */
+export const useDeleteLicense = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteLicense>>, TError,{licenseId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteLicense>>,
+        TError,
+        {licenseId: string},
+        TContext
+      > => {
+      return useMutation(getDeleteLicenseMutationOptions(options));
+    }
+
+export const getRenewLicenseUrl = (licenseId: string,) => {
+
+
+
+
+  return `/api/licenses/${licenseId}/renew`
+}
+
+/**
+ * @summary Renew a license as the owner
+ */
+export const renewLicense = async (licenseId: string,
+    renewLicenseInput?: RenewLicenseInput, options?: Parameters<typeof customFetch>[1]): Promise<LicenseAccess> => {
+
+  return customFetch<LicenseAccess>(getRenewLicenseUrl(licenseId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(renewLicenseInput)
+  }
+);}
+
+
+
+
+
+export const getRenewLicenseMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof renewLicense>>, TError,{licenseId: string;data?: BodyType<RenewLicenseInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof renewLicense>>, TError,{licenseId: string;data?: BodyType<RenewLicenseInput>}, TContext> => {
+
+const mutationKey = ['renewLicense'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof renewLicense>>, {licenseId: string;data?: BodyType<RenewLicenseInput>}> = (props) => {
+          const {licenseId,data} = props ?? {};
+
+          return  renewLicense(licenseId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RenewLicenseMutationResult = NonNullable<Awaited<ReturnType<typeof renewLicense>>>
+    export type RenewLicenseMutationBody = BodyType<RenewLicenseInput> | undefined
+    export type RenewLicenseMutationError = ErrorType<void>
+
+    /**
+ * @summary Renew a license as the owner
+ */
+export const useRenewLicense = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof renewLicense>>, TError,{licenseId: string;data?: BodyType<RenewLicenseInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof renewLicense>>,
+        TError,
+        {licenseId: string;data?: BodyType<RenewLicenseInput>},
+        TContext
+      > => {
+      return useMutation(getRenewLicenseMutationOptions(options));
+    }
+
+export const getValidateLicenseUrl = () => {
+
+
+
+
+  return `/api/licenses/validate`
+}
+
+/**
+ * @summary Validate a license key for a browser
+ */
+export const validateLicense = async (licenseClientInput: LicenseClientInput, options?: Parameters<typeof customFetch>[1]): Promise<LicenseAccess> => {
+
+  return customFetch<LicenseAccess>(getValidateLicenseUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(licenseClientInput)
+  }
+);}
+
+
+
+
+
+export const getValidateLicenseMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof validateLicense>>, TError,{data: BodyType<LicenseClientInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof validateLicense>>, TError,{data: BodyType<LicenseClientInput>}, TContext> => {
+
+const mutationKey = ['validateLicense'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof validateLicense>>, {data: BodyType<LicenseClientInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  validateLicense(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ValidateLicenseMutationResult = NonNullable<Awaited<ReturnType<typeof validateLicense>>>
+    export type ValidateLicenseMutationBody = BodyType<LicenseClientInput>
+    export type ValidateLicenseMutationError = ErrorType<void>
+
+    /**
+ * @summary Validate a license key for a browser
+ */
+export const useValidateLicense = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof validateLicense>>, TError,{data: BodyType<LicenseClientInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof validateLicense>>,
+        TError,
+        {data: BodyType<LicenseClientInput>},
+        TContext
+      > => {
+      return useMutation(getValidateLicenseMutationOptions(options));
+    }
+
+export const getGetLicenseWorkspaceUrl = () => {
+
+
+
+
+  return `/api/licenses/workspace/get`
+}
+
+/**
+ * @summary Load a browser-specific license workspace
+ */
+export const getLicenseWorkspace = async (licenseClientInput: LicenseClientInput, options?: Parameters<typeof customFetch>[1]): Promise<LicenseWorkspaceResponse> => {
+
+  return customFetch<LicenseWorkspaceResponse>(getGetLicenseWorkspaceUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(licenseClientInput)
+  }
+);}
+
+
+
+
+
+export const getGetLicenseWorkspaceMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof getLicenseWorkspace>>, TError,{data: BodyType<LicenseClientInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof getLicenseWorkspace>>, TError,{data: BodyType<LicenseClientInput>}, TContext> => {
+
+const mutationKey = ['getLicenseWorkspace'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof getLicenseWorkspace>>, {data: BodyType<LicenseClientInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  getLicenseWorkspace(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GetLicenseWorkspaceMutationResult = NonNullable<Awaited<ReturnType<typeof getLicenseWorkspace>>>
+    export type GetLicenseWorkspaceMutationBody = BodyType<LicenseClientInput>
+    export type GetLicenseWorkspaceMutationError = ErrorType<void>
+
+    /**
+ * @summary Load a browser-specific license workspace
+ */
+export const useGetLicenseWorkspace = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof getLicenseWorkspace>>, TError,{data: BodyType<LicenseClientInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof getLicenseWorkspace>>,
+        TError,
+        {data: BodyType<LicenseClientInput>},
+        TContext
+      > => {
+      return useMutation(getGetLicenseWorkspaceMutationOptions(options));
+    }
+
+export const getSaveLicenseWorkspaceUrl = () => {
+
+
+
+
+  return `/api/licenses/workspace`
+}
+
+/**
+ * @summary Save a browser-specific license workspace
+ */
+export const saveLicenseWorkspace = async (saveLicenseWorkspaceInput: SaveLicenseWorkspaceInput, options?: Parameters<typeof customFetch>[1]): Promise<WorkspaceSaveResponse> => {
+
+  return customFetch<WorkspaceSaveResponse>(getSaveLicenseWorkspaceUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(saveLicenseWorkspaceInput)
+  }
+);}
+
+
+
+
+
+export const getSaveLicenseWorkspaceMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveLicenseWorkspace>>, TError,{data: BodyType<SaveLicenseWorkspaceInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof saveLicenseWorkspace>>, TError,{data: BodyType<SaveLicenseWorkspaceInput>}, TContext> => {
+
+const mutationKey = ['saveLicenseWorkspace'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof saveLicenseWorkspace>>, {data: BodyType<SaveLicenseWorkspaceInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  saveLicenseWorkspace(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SaveLicenseWorkspaceMutationResult = NonNullable<Awaited<ReturnType<typeof saveLicenseWorkspace>>>
+    export type SaveLicenseWorkspaceMutationBody = BodyType<SaveLicenseWorkspaceInput>
+    export type SaveLicenseWorkspaceMutationError = ErrorType<void>
+
+    /**
+ * @summary Save a browser-specific license workspace
+ */
+export const useSaveLicenseWorkspace = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveLicenseWorkspace>>, TError,{data: BodyType<SaveLicenseWorkspaceInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof saveLicenseWorkspace>>,
+        TError,
+        {data: BodyType<SaveLicenseWorkspaceInput>},
+        TContext
+      > => {
+      return useMutation(getSaveLicenseWorkspaceMutationOptions(options));
+    }
+
+export const getRenewLicenseForUserUrl = () => {
+
+
+
+
+  return `/api/licenses/renew`
+}
+
+/**
+ * @summary Renew a license from the user side
+ */
+export const renewLicenseForUser = async (renewLicenseForUserInput: RenewLicenseForUserInput, options?: Parameters<typeof customFetch>[1]): Promise<LicenseAccess> => {
+
+  return customFetch<LicenseAccess>(getRenewLicenseForUserUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(renewLicenseForUserInput)
+  }
+);}
+
+
+
+
+
+export const getRenewLicenseForUserMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof renewLicenseForUser>>, TError,{data: BodyType<RenewLicenseForUserInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof renewLicenseForUser>>, TError,{data: BodyType<RenewLicenseForUserInput>}, TContext> => {
+
+const mutationKey = ['renewLicenseForUser'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof renewLicenseForUser>>, {data: BodyType<RenewLicenseForUserInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  renewLicenseForUser(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RenewLicenseForUserMutationResult = NonNullable<Awaited<ReturnType<typeof renewLicenseForUser>>>
+    export type RenewLicenseForUserMutationBody = BodyType<RenewLicenseForUserInput>
+    export type RenewLicenseForUserMutationError = ErrorType<void>
+
+    /**
+ * @summary Renew a license from the user side
+ */
+export const useRenewLicenseForUser = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof renewLicenseForUser>>, TError,{data: BodyType<RenewLicenseForUserInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof renewLicenseForUser>>,
+        TError,
+        {data: BodyType<RenewLicenseForUserInput>},
+        TContext
+      > => {
+      return useMutation(getRenewLicenseForUserMutationOptions(options));
     }
 

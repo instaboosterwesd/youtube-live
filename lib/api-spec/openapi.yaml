@@ -14,6 +14,8 @@ tags:
     description: Live stream control operations
   - name: media
     description: Local media upload operations
+  - name: licenses
+    description: License access and workspace operations
 paths:
   /healthz:
     get:
@@ -165,7 +167,179 @@ paths:
                 $ref: "#/components/schemas/YoutubeDownloadResponse"
         "400":
           description: Invalid URL or download failure
+  /licenses:
+    get:
+      operationId: listLicenses
+      tags: [licenses]
+      summary: List licenses for the owner
+      parameters:
+        - $ref: "#/components/parameters/OwnerPassword"
+      responses:
+        "200":
+          description: License list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LicenseListResponse"
+        "401":
+          description: Owner password is incorrect
+    post:
+      operationId: createLicense
+      tags: [licenses]
+      summary: Create a license
+      parameters:
+        - $ref: "#/components/parameters/OwnerPassword"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateLicenseInput"
+      responses:
+        "201":
+          description: License created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LicenseAccess"
+        "401":
+          description: Owner password is incorrect
+  /licenses/{licenseId}:
+    delete:
+      operationId: deleteLicense
+      tags: [licenses]
+      summary: Delete a license and its workspace data
+      parameters:
+        - $ref: "#/components/parameters/OwnerPassword"
+        - name: licenseId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: License deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteLicenseResult"
+        "401":
+          description: Owner password is incorrect
+  /licenses/{licenseId}/renew:
+    post:
+      operationId: renewLicense
+      tags: [licenses]
+      summary: Renew a license as the owner
+      parameters:
+        - $ref: "#/components/parameters/OwnerPassword"
+        - name: licenseId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RenewLicenseInput"
+      responses:
+        "200":
+          description: License renewed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LicenseAccess"
+        "401":
+          description: Owner password is incorrect
+  /licenses/validate:
+    post:
+      operationId: validateLicense
+      tags: [licenses]
+      summary: Validate a license key for a browser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LicenseClientInput"
+      responses:
+        "200":
+          description: License is active
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LicenseAccess"
+        "403":
+          description: License is invalid or expired
+  /licenses/workspace/get:
+    post:
+      operationId: getLicenseWorkspace
+      tags: [licenses]
+      summary: Load a browser-specific license workspace
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LicenseClientInput"
+      responses:
+        "200":
+          description: Workspace loaded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LicenseWorkspaceResponse"
+        "403":
+          description: License is invalid or expired
+  /licenses/workspace:
+    put:
+      operationId: saveLicenseWorkspace
+      tags: [licenses]
+      summary: Save a browser-specific license workspace
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaveLicenseWorkspaceInput"
+      responses:
+        "200":
+          description: Workspace saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkspaceSaveResponse"
+        "403":
+          description: License is invalid or expired
+  /licenses/renew:
+    post:
+      operationId: renewLicenseForUser
+      tags: [licenses]
+      summary: Renew a license from the user side
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RenewLicenseForUserInput"
+      responses:
+        "200":
+          description: License renewed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LicenseAccess"
+        "404":
+          description: License key not found
 components:
+  parameters:
+    OwnerPassword:
+      name: X-Owner-Password
+      in: header
+      required: true
+      schema:
+        type: string
   schemas:
     HealthStatus:
       type: object
@@ -301,4 +475,119 @@ components:
         - playbackUrl
         - title
         - duration
+    CreateLicenseInput:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        days:
+          type: number
+          minimum: 1
+          maximum: 3650
+          default: 30
+      required:
+        - name
+    RenewLicenseInput:
+      type: object
+      properties:
+        days:
+          type: number
+          minimum: 1
+          maximum: 3650
+          default: 30
+    LicenseClientInput:
+      type: object
+      properties:
+        key:
+          type: string
+          minLength: 8
+        clientId:
+          type: string
+          minLength: 8
+      required:
+        - key
+        - clientId
+    RenewLicenseForUserInput:
+      allOf:
+        - $ref: "#/components/schemas/LicenseClientInput"
+        - type: object
+          properties:
+            days:
+              type: number
+              minimum: 1
+              maximum: 3650
+              default: 30
+    LicenseAccess:
+      type: object
+      properties:
+        licenseId:
+          type: string
+        key:
+          type: string
+        name:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        active:
+          type: boolean
+        clientId:
+          type: string
+      required:
+        - licenseId
+        - key
+        - name
+        - expiresAt
+        - active
+    LicenseListResponse:
+      type: object
+      properties:
+        licenses:
+          type: array
+          items:
+            $ref: "#/components/schemas/LicenseAccess"
+      required:
+        - licenses
+    DeleteLicenseResult:
+      type: object
+      properties:
+        licenseId:
+          type: string
+        deleted:
+          type: boolean
+      required:
+        - licenseId
+        - deleted
+    LicenseWorkspaceData:
+      type: object
+      additionalProperties: true
+    LicenseWorkspaceResponse:
+      type: object
+      properties:
+        license:
+          $ref: "#/components/schemas/LicenseAccess"
+        data:
+          oneOf:
+            - $ref: "#/components/schemas/LicenseWorkspaceData"
+            - type: "null"
+      required:
+        - license
+        - data
+    SaveLicenseWorkspaceInput:
+      allOf:
+        - $ref: "#/components/schemas/LicenseClientInput"
+        - type: object
+          properties:
+            data:
+              $ref: "#/components/schemas/LicenseWorkspaceData"
+          required:
+            - data
+    WorkspaceSaveResponse:
+      type: object
+      properties:
+        saved:
+          type: boolean
+      required:
+        - saved
 

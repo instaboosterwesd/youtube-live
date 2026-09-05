@@ -22,3 +22,8 @@ timeoutMs = 20000
 [nix]
 channel = "stable-25_05"
 packages = ["yt-dlp"]
+
+[userenv]
+
+[userenv.shared]
+FIREBASE_DATABASE_URL = "https://youtbe-looping-default-rtdb.firebaseio.com"

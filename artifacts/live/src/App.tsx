@@ -31,10 +31,25 @@ type VideoItem = {
 type VideoGroup = { id: string; name: string; description: string; videoIds: string[]; createdAt: string };
 type Activity = { id: string; type: string; message: string; time: string };
 type DataState = { channels: LiveChannel[]; videos: VideoItem[]; groups: VideoGroup[]; activities: Activity[] };
+type LicenseSession = { licenseId: string; key: string; name: string; expiresAt: string; active: boolean; clientId?: string };
 
 const queryClient = new QueryClient();
 const now = () => new Date().toISOString();
 const uid = (prefix: string) => `${prefix}-${Math.random().toString(36).slice(2, 9)}`;
+const isLicenseActive = (license: LicenseSession | null) => Boolean(license && license.active && new Date(license.expiresAt).getTime() > Date.now());
+const getClientId = () => {
+  const existing = localStorage.getItem("signal-desk-client-id");
+  if (existing) return existing;
+  const next = `client-${crypto.randomUUID()}`;
+  localStorage.setItem("signal-desk-client-id", next);
+  return next;
+};
+async function apiJson<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(path, { ...init, headers: { "Content-Type": "application/json", ...(init?.headers || {}) } });
+  const payload = await response.json().catch(() => ({})) as { error?: string } & T;
+  if (!response.ok) throw new Error(payload.error || "The request could not be completed.");
+  return payload;
+}
 const fmtTime = (date: string | null) => {
   if (!date) return "—";
   const mins = Math.max(1, Math.floor((Date.now() - new Date(date).getTime()) / 60000));
@@ -118,22 +133,93 @@ function ensureBundledFaceVideo(value: DataState): DataState {
   return { ...normalizedValue, groups, videos, activities: alreadyAnnounced ? normalizedValue.activities : [{ id: uid("act"), type: "video", message: "GTV 5 face video is ready", time: "Just now" }, ...normalizedValue.activities].slice(0, 8) };
 }
 
-function useWorkspace() {
-  const [data, setData] = useState<DataState>(() => {
-    try { return ensureBundledFaceVideo(JSON.parse(localStorage.getItem("signal-desk-data-v2") || "null") || seed); } catch { return seed; }
+function normalizeWorkspace(value: unknown): DataState {
+  if (!value || typeof value !== "object") return seed;
+  const candidate = value as Partial<DataState>;
+  return ensureBundledFaceVideo({
+    channels: Array.isArray(candidate.channels) ? candidate.channels : [],
+    videos: Array.isArray(candidate.videos) ? candidate.videos : [],
+    groups: Array.isArray(candidate.groups) ? candidate.groups : [],
+    activities: Array.isArray(candidate.activities) ? candidate.activities : [],
   });
-  const [user, setUser] = useState(() => localStorage.getItem("signal-desk-user") || "");
+}
+
+function useLicense() {
+  const [clientId] = useState(getClientId);
+  const [license, setLicense] = useState<LicenseSession | null>(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem("signal-desk-license") || "null") as LicenseSession | null;
+      return stored ? { ...stored, clientId: stored.clientId || getClientId() } : null;
+    } catch { return null; }
+  });
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const activate = async (key: string) => {
+    setBusy(true); setError("");
+    try {
+      const result = await apiJson<LicenseSession>("/api/licenses/validate", { method: "POST", body: JSON.stringify({ key: key.trim(), clientId }) });
+      const next = { ...result, clientId };
+      setLicense(next); localStorage.setItem("signal-desk-license", JSON.stringify(next));
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "This license could not be activated.");
+      throw reason;
+    } finally { setBusy(false); }
+  };
+  const renew = async () => {
+    if (!license) return;
+    setBusy(true); setError("");
+    try {
+      const result = await apiJson<LicenseSession>("/api/licenses/renew", { method: "POST", body: JSON.stringify({ key: license.key, clientId, days: 30 }) });
+      const next = { ...result, clientId };
+      setLicense(next); localStorage.setItem("signal-desk-license", JSON.stringify(next));
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "This license could not be renewed.");
+    } finally { setBusy(false); }
+  };
+  const clear = () => { setLicense(null); localStorage.removeItem("signal-desk-license"); };
+  return { clientId, license, busy, error, activate, renew, clear, setError };
+}
+
+function useWorkspace(license: LicenseSession | null, clearLicense: () => void) {
+  const [data, setData] = useState<DataState>(seed);
+  const [ready, setReady] = useState(false);
   const [toast, setToast] = useState("");
-  useEffect(() => { localStorage.setItem("signal-desk-data-v2", JSON.stringify(data)); }, [data]);
+  const user = license?.name || "";
+  useEffect(() => {
+    let cancelled = false;
+    setReady(false);
+    if (!license || !isLicenseActive(license)) {
+      setData(seed); setReady(true);
+      return () => { cancelled = true; };
+    }
+    void apiJson<{ data: DataState | null }>("/api/licenses/workspace/get", {
+      method: "POST",
+      body: JSON.stringify({ key: license.key, clientId: license.clientId }),
+    }).then((result) => {
+      if (!cancelled) { setData(normalizeWorkspace(result.data)); setReady(true); }
+    }).catch((reason) => {
+      if (!cancelled) { setData(seed); setToast(reason instanceof Error ? reason.message : "Could not load the workspace."); setReady(true); }
+    });
+    return () => { cancelled = true; };
+  }, [license?.licenseId, license?.key, license?.clientId]);
+  useEffect(() => {
+    if (!ready || !license || !isLicenseActive(license)) return;
+    const timer = window.setTimeout(() => {
+      void apiJson("/api/licenses/workspace", {
+        method: "PUT",
+        body: JSON.stringify({ key: license.key, clientId: license.clientId, data }),
+      }).catch((reason) => setToast(reason instanceof Error ? reason.message : "Could not save the workspace."));
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [data, ready, license?.licenseId, license?.key, license?.clientId]);
   useEffect(() => { if (!toast) return; const timer = setTimeout(() => setToast(""), 2600); return () => clearTimeout(timer); }, [toast]);
   const addActivity = (message: string, type = "edit") => ({ id:uid("act"), type, message, time:"Just now" });
   const update = (next: Partial<DataState>, activity?: { message: string; type?: string }) => {
     setData((old) => ({ ...old, ...next, activities: activity ? [addActivity(activity.message, activity.type), ...old.activities].slice(0, 8) : old.activities }));
     if (activity) setToast(activity.message);
   };
-  const login = (name: string) => { setUser(name); localStorage.setItem("signal-desk-user", name); };
-  const logout = () => { setUser(""); localStorage.removeItem("signal-desk-user"); };
-  return { data, user, toast, update, login, logout, setToast };
+  const logout = () => { clearLicense(); };
+  return { data, user, toast, ready, update, logout, setToast };
 }
 
 function Brand({ compact = false }: { compact?: boolean }) {
@@ -187,6 +273,75 @@ function Login({ onLogin }: { onLogin:(name:string)=>void }) {
     <section className="login-visual"><div className="login-logo"><div className="brand-mark"><Radio size={18}/></div><div><div className="brand-name">Signal Desk</div><div className="brand-note">local control room</div></div></div><div className="login-copy"><div className="signal-line"><span/>SYSTEM READY · 04:32:18 UTC</div><h1>Know what’s<br/><em>on air.</em></h1><p>A quiet, local command center for preparing a stream, keeping an eye on the room, and giving every recording a place to land.</p></div><div className="signal-line"><span/>BUILT FOR SMALL TEAMS · NO SERVER REQUIRED</div></section>
     <section className="login-panel"><div className="login-card"><p className="eyebrow">Enter the control room</p><h2>Welcome back.</h2><p className="subtle">Use any name to open your local workspace. This is a demo environment, not production authentication.</p>{error && <div className="error-note" data-testid="status-login-error">{error}</div>}<form className="login-form" onSubmit={submit}><div className="field"><label htmlFor="login-name">Name or email</label><input id="login-name" data-testid="input-login-name" value={name} onChange={e=>setName(e.target.value)} placeholder="you@studio.local" autoComplete="username"/></div><div className="field"><label htmlFor="login-password">Demo password</label><input id="login-password" data-testid="input-login-password" type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="dev" autoComplete="current-password"/></div><button className="button login-submit" type="submit" data-testid="button-enter-room">Enter workspace <ArrowRight size={16}/></button></form><div className="demo-note"><ShieldCheck size={15}/><span><strong>Local demo.</strong> Your workspace persists in localStorage on this device. Password is <span className="mono">dev</span>.</span></div></div></section>
   </div>;
+}
+
+function LicenseGate({ license, busy, error, onActivate, onRenew }: { license:LicenseSession|null; busy:boolean; error:string; onActivate:(key:string)=>Promise<void>; onRenew:()=>Promise<void> }) {
+  const [key, setKey] = useState(license?.key || "");
+  useEffect(() => { setKey(license?.key || ""); }, [license?.key]);
+  const expired = Boolean(license && !isLicenseActive(license));
+  const submit = (event:FormEvent) => {
+    event.preventDefault();
+    if (key.trim()) void onActivate(key).catch(() => undefined);
+  };
+  return <div className="login-page license-page">
+    <section className="login-visual">
+      <div className="login-logo"><div className="brand-mark"><Radio size={18}/></div><div><div className="brand-name">Signal Desk</div><div className="brand-note">licensed control room</div></div></div>
+      <div className="login-copy"><div className="signal-line"><span/>LICENSED ACCESS · READY</div><h1>Bring your<br/><em>room on air.</em></h1><p>Enter your license key to open your private live control room. Your channels, videos, and settings stay separate from every other license.</p></div>
+      <div className="signal-line"><span/>ONE LICENSE · ONE PRIVATE WORKSPACE</div>
+    </section>
+    <section className="login-panel"><div className="login-card">
+      <p className="eyebrow">{expired ? "License expired" : "Enter your license"}</p>
+      <h2>{expired ? "Renew your key." : "Unlock the room."}</h2>
+      <p className="subtle">{expired ? "Your workspace is waiting. Renew this same key for 30 more days, or enter a different active key." : "Use the license key provided by the owner to continue."}</p>
+      {error && <div className="error-note" data-testid="status-license-error">{error}</div>}
+      <form className="login-form" onSubmit={submit}>
+        <div className="field"><label htmlFor="license-key">License key</label><input id="license-key" value={key} onChange={e=>setKey(e.target.value)} placeholder="SD-XXXXXXXXXXXX" autoComplete="off" data-testid="input-license-key"/></div>
+        <button className="button login-submit" type="submit" disabled={busy || !key.trim()} data-testid="button-activate-license">{busy ? "Checking…" : "Open workspace"} <ArrowRight size={16}/></button>
+      </form>
+      {expired && <button className="button secondary license-renew" onClick={()=>void onRenew()} disabled={busy} data-testid="button-renew-license">{busy ? "Renewing…" : "Renew your key · 30 days"} <Check size={14}/></button>}
+      {license && <div className="license-status"><strong>{license.name}</strong><span>Key: <span className="mono">{license.key}</span></span><span>Expired {new Date(license.expiresAt).toLocaleDateString()}</span></div>}
+      <div className="demo-note"><ShieldCheck size={15}/><span>Workspace data is separated by license and browser. Owner access is available at <a href="/owner" className="section-link">/owner</a>.</span></div>
+    </div></section>
+  </div>;
+}
+
+function OwnerPage() {
+  const [password, setPassword] = useState("");
+  const [authorizedPassword, setAuthorizedPassword] = useState("");
+  const [licenses, setLicenses] = useState<LicenseSession[]>([]);
+  const [name, setName] = useState("");
+  const [days, setDays] = useState("30");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const load = async (ownerPassword: string) => {
+    const result = await apiJson<{ licenses: LicenseSession[] }>("/api/licenses", { headers: { "X-Owner-Password": ownerPassword } });
+    setLicenses(result.licenses);
+  };
+  const signIn = async (event:FormEvent) => {
+    event.preventDefault(); setBusy(true); setError("");
+    try { await load(password); setAuthorizedPassword(password); } catch (reason) { setError(reason instanceof Error ? reason.message : "Owner access was denied."); } finally { setBusy(false); }
+  };
+  const create = async (event:FormEvent) => {
+    event.preventDefault(); if (!name.trim()) return;
+    setBusy(true); setError("");
+    try {
+      await apiJson<LicenseSession>("/api/licenses", { method:"POST", headers: { "X-Owner-Password": authorizedPassword }, body: JSON.stringify({ name: name.trim(), days: Number(days) }) });
+      setName(""); await load(authorizedPassword);
+    } catch (reason) { setError(reason instanceof Error ? reason.message : "Could not create the license."); } finally { setBusy(false); }
+  };
+  const renew = async (licenseId:string) => {
+    setBusy(true); setError("");
+    try { await apiJson<LicenseSession>(`/api/licenses/${encodeURIComponent(licenseId)}/renew`, { method:"POST", headers: { "X-Owner-Password": authorizedPassword }, body: JSON.stringify({ days: 30 }) }); await load(authorizedPassword); }
+    catch (reason) { setError(reason instanceof Error ? reason.message : "Could not renew the license."); } finally { setBusy(false); }
+  };
+  const remove = async (license:LicenseSession) => {
+    if (!window.confirm(`Delete ${license.name} and its workspace data?`)) return;
+    setBusy(true); setError("");
+    try { await apiJson(`/api/licenses/${encodeURIComponent(license.licenseId)}`, { method:"DELETE", headers: { "X-Owner-Password": authorizedPassword } }); await load(authorizedPassword); }
+    catch (reason) { setError(reason instanceof Error ? reason.message : "Could not delete the license."); } finally { setBusy(false); }
+  };
+  if (!authorizedPassword) return <div className="login-page owner-login-page"><section className="login-visual"><div className="login-logo"><div className="brand-mark"><Radio size={18}/></div><div><div className="brand-name">Signal Desk</div><div className="brand-note">owner console</div></div></div><div className="login-copy"><div className="signal-line"><span/>OWNER CONSOLE · PRIVATE</div><h1>Keep every<br/><em>key in hand.</em></h1><p>Create, renew, and remove license access for the control rooms you manage.</p></div><div className="signal-line"><span/>LICENSE ADMINISTRATION</div></section><section className="login-panel"><div className="login-card"><p className="eyebrow">Owner access</p><h2>Welcome, owner.</h2><p className="subtle">Enter the owner password to manage license keys.</p>{error&&<div className="error-note">{error}</div>}<form className="login-form" onSubmit={signIn}><div className="field"><label htmlFor="owner-password">Owner password</label><input id="owner-password" type="password" value={password} onChange={e=>setPassword(e.target.value)} autoFocus data-testid="input-owner-password"/></div><button className="button login-submit" type="submit" disabled={busy||!password} data-testid="button-owner-login">{busy?"Checking…":"Open owner console"} <ArrowRight size={16}/></button></form><div className="demo-note"><ShieldCheck size={15}/><span>Public license access is enabled by the Firebase Realtime Database rules.</span></div><a href="/" className="section-link">Back to license access</a></div></section></div>;
+  return <div className="owner-page"><header className="owner-topbar"><Brand/><a href="/" className="button secondary">Open license gate <ArrowRight size={14}/></a></header><main className="owner-content"><div className="page-head"><div><p className="eyebrow">Owner console</p><h1>License keys</h1><p className="subtle">Create access keys and keep each customer workspace separate.</p></div><div className="status live"><span className="status-dot"/>Firebase connected</div></div>{error&&<div className="error-note">{error}</div>}<section className="card section-card owner-create"><div className="section-head"><div><h2 className="section-title">Create license</h2><p className="subtle" style={{margin:"5px 0 0",fontSize:11}}>The generated key can be used by more than one browser; each browser gets its own workspace.</p></div><Plus size={17} color="#6c8b83"/></div><form className="owner-create-form" onSubmit={create}><div className="field"><label>Customer / workspace name</label><input value={name} onChange={e=>setName(e.target.value)} placeholder="Studio A" data-testid="input-license-name"/></div><div className="field"><label>Valid for days</label><input type="number" min="1" max="3650" value={days} onChange={e=>setDays(e.target.value)} data-testid="input-license-days"/></div><button className="button" type="submit" disabled={busy||!name.trim()} data-testid="button-create-license"><Plus size={15}/> Create license</button></form></section><section className="card section-card owner-list"><div className="section-head"><div><h2 className="section-title">{licenses.length} license{licenses.length===1?"":"s"}</h2><p className="subtle" style={{margin:"5px 0 0",fontSize:11}}>Existing access keys and renewal controls.</p></div><Clipboard size={17} color="#6c8b83"/></div>{licenses.length===0?<EmptyState icon={<ShieldCheck size={21}/>} title="No licenses yet" copy="Create the first key above to give a workspace access."/>:<div className="license-list">{licenses.map(license=>{const active=isLicenseActive(license);return <div className="license-row" key={license.licenseId}><div className="license-row-main"><div className="license-key-badge"><ShieldCheck size={15}/></div><div><strong>{license.name}</strong><span className="mono">{license.key}</span></div></div><div className={`status ${active?"live":"stopped"}`}><span className="status-dot"/>{active?"Active":"Expired"} · {new Date(license.expiresAt).toLocaleDateString()}</div><div className="actions"><button className="button secondary small" onClick={()=>void renew(license.licenseId)} disabled={busy}>Renew 30 days</button><button className="icon-button" onClick={()=>void remove(license)} disabled={busy} title="Delete license" data-testid={`button-delete-license-${license.licenseId}`}><Trash2 size={13}/></button></div></div>})}</div>}</section></main></div>;
 }
 
 function Metric({ label, value, detail, dim }: { label:string; value:string|number; detail:string; dim?:boolean }) { return <div className="card metric" data-testid={`metric-${label.toLowerCase().replaceAll(" ","-")}`}><div className="metric-kicker">{label}</div><div className="metric-value">{value}</div><div className={`metric-delta ${dim ? "dim":""}`}>{detail}</div></div>; }
@@ -383,10 +538,12 @@ function Routed({workspace}:{workspace:ReturnType<typeof useWorkspace>}) {
 }
 
 function App() {
-  const workspace=useWorkspace(); const [location,setLocation]=useLocation();
-  useEffect(() => { if (workspace.user && location === "/") setLocation("/dashboard"); }, [workspace.user, location, setLocation]);
-  if (!workspace.user) return <Login onLogin={workspace.login}/>;
-  if (location === "/") return <div style={{minHeight:"100dvh",background:"hsl(var(--background))"}}/>;
+  const license = useLicense();
+  const workspace=useWorkspace(license.license, license.clear); const [location,setLocation]=useLocation();
+  useEffect(() => { if (isLicenseActive(license.license) && location === "/") setLocation("/dashboard"); }, [license.license, location, setLocation]);
+  if (location === "/owner") return <OwnerPage/>;
+  if (!license.license || !isLicenseActive(license.license)) return <LicenseGate license={license.license} busy={license.busy} error={license.error} onActivate={license.activate} onRenew={license.renew}/>;
+  if (!workspace.ready) return <div className="workspace-loading"><Radio size={20}/><span>Loading your private workspace…</span></div>;
   return <Routed workspace={workspace}/>;
 }
 

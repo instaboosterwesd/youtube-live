@@ -148,3 +148,198 @@ export const DownloadYoutubeVideoResponse = zod.object({
 })
 
 
+/**
+ * @summary List licenses for the owner
+ */
+export const ListLicensesHeader = zod.object({
+  "X-Owner-Password": zod.string()
+})
+
+export const ListLicensesResponse = zod.object({
+  "licenses": zod.array(zod.object({
+  "licenseId": zod.string(),
+  "key": zod.string(),
+  "name": zod.string(),
+  "expiresAt": zod.coerce.date(),
+  "active": zod.boolean(),
+  "clientId": zod.string().optional()
+}))
+})
+
+
+/**
+ * @summary Create a license
+ */
+export const CreateLicenseHeader = zod.object({
+  "X-Owner-Password": zod.string()
+})
+
+
+export const createLicenseBodyDaysDefault = 30;
+export const createLicenseBodyDaysMax = 3650;
+
+
+
+export const CreateLicenseBody = zod.object({
+  "name": zod.string().min(1),
+  "days": zod.number().min(1).max(createLicenseBodyDaysMax).default(createLicenseBodyDaysDefault)
+})
+
+export const CreateLicenseResponse = zod.object({
+  "licenseId": zod.string(),
+  "key": zod.string(),
+  "name": zod.string(),
+  "expiresAt": zod.coerce.date(),
+  "active": zod.boolean(),
+  "clientId": zod.string().optional()
+})
+
+
+/**
+ * @summary Delete a license and its workspace data
+ */
+export const DeleteLicenseParams = zod.object({
+  "licenseId": zod.coerce.string()
+})
+
+export const DeleteLicenseHeader = zod.object({
+  "X-Owner-Password": zod.string()
+})
+
+export const DeleteLicenseResponse = zod.object({
+  "licenseId": zod.string(),
+  "deleted": zod.boolean()
+})
+
+
+/**
+ * @summary Renew a license as the owner
+ */
+export const RenewLicenseParams = zod.object({
+  "licenseId": zod.coerce.string()
+})
+
+export const RenewLicenseHeader = zod.object({
+  "X-Owner-Password": zod.string()
+})
+
+export const renewLicenseBodyDaysDefault = 30;
+export const renewLicenseBodyDaysMax = 3650;
+
+
+
+export const RenewLicenseBody = zod.object({
+  "days": zod.number().min(1).max(renewLicenseBodyDaysMax).default(renewLicenseBodyDaysDefault)
+})
+
+export const RenewLicenseResponse = zod.object({
+  "licenseId": zod.string(),
+  "key": zod.string(),
+  "name": zod.string(),
+  "expiresAt": zod.coerce.date(),
+  "active": zod.boolean(),
+  "clientId": zod.string().optional()
+})
+
+
+/**
+ * @summary Validate a license key for a browser
+ */
+export const validateLicenseBodyKeyMin = 8;
+
+export const validateLicenseBodyClientIdMin = 8;
+
+
+
+export const ValidateLicenseBody = zod.object({
+  "key": zod.string().min(validateLicenseBodyKeyMin),
+  "clientId": zod.string().min(validateLicenseBodyClientIdMin)
+})
+
+export const ValidateLicenseResponse = zod.object({
+  "licenseId": zod.string(),
+  "key": zod.string(),
+  "name": zod.string(),
+  "expiresAt": zod.coerce.date(),
+  "active": zod.boolean(),
+  "clientId": zod.string().optional()
+})
+
+
+/**
+ * @summary Load a browser-specific license workspace
+ */
+export const getLicenseWorkspaceBodyKeyMin = 8;
+
+export const getLicenseWorkspaceBodyClientIdMin = 8;
+
+
+
+export const GetLicenseWorkspaceBody = zod.object({
+  "key": zod.string().min(getLicenseWorkspaceBodyKeyMin),
+  "clientId": zod.string().min(getLicenseWorkspaceBodyClientIdMin)
+})
+
+export const GetLicenseWorkspaceResponse = zod.object({
+  "license": zod.object({
+  "licenseId": zod.string(),
+  "key": zod.string(),
+  "name": zod.string(),
+  "expiresAt": zod.coerce.date(),
+  "active": zod.boolean(),
+  "clientId": zod.string().optional()
+}),
+  "data": zod.union([zod.record(zod.string(), zod.unknown()),zod.null()])
+})
+
+
+/**
+ * @summary Save a browser-specific license workspace
+ */
+export const saveLicenseWorkspaceBodyOneKeyMin = 8;
+
+export const saveLicenseWorkspaceBodyOneClientIdMin = 8;
+
+
+
+export const SaveLicenseWorkspaceBody = zod.object({
+  "key": zod.string().min(saveLicenseWorkspaceBodyOneKeyMin),
+  "clientId": zod.string().min(saveLicenseWorkspaceBodyOneClientIdMin)
+}).and(zod.object({
+  "data": zod.record(zod.string(), zod.unknown())
+}))
+
+export const SaveLicenseWorkspaceResponse = zod.object({
+  "saved": zod.boolean()
+})
+
+
+/**
+ * @summary Renew a license from the user side
+ */
+export const renewLicenseForUserBodyOneKeyMin = 8;
+
+export const renewLicenseForUserBodyOneClientIdMin = 8;
+
+export const renewLicenseForUserBodyTwoDaysDefault = 30;
+export const renewLicenseForUserBodyTwoDaysMax = 3650;
+
+
+
+export const RenewLicenseForUserBody = zod.object({
+  "key": zod.string().min(renewLicenseForUserBodyOneKeyMin),
+  "clientId": zod.string().min(renewLicenseForUserBodyOneClientIdMin)
+}).and(zod.object({
+  "days": zod.number().min(1).max(renewLicenseForUserBodyTwoDaysMax).default(renewLicenseForUserBodyTwoDaysDefault)
+}))
+
+export const RenewLicenseForUserResponse = zod.object({
+  "licenseId": zod.string(),
+  "key": zod.string(),
+  "name": zod.string(),
+  "expiresAt": zod.coerce.date(),
+  "active": zod.boolean(),
+  "clientId": zod.string().optional()
+})
+
+

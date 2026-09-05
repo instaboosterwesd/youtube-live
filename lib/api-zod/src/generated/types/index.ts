@@ -6,13 +6,25 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './createLicenseInput';
+export * from './deleteLicenseResult';
 export * from './healthStatus';
+export * from './licenseAccess';
+export * from './licenseClientInput';
+export * from './licenseListResponse';
+export * from './licenseWorkspaceData';
+export * from './licenseWorkspaceResponse';
 export * from './mediaUploadResponse';
+export * from './ownerPasswordParameter';
+export * from './renewLicenseForUserInput';
+export * from './renewLicenseInput';
+export * from './saveLicenseWorkspaceInput';
 export * from './streamControlResponse';
 export * from './streamControlResponseStatus';
 export * from './streamStartInput';
 export * from './streamStartInputAspectRatio';
 export * from './streamStartInputFacePosition';
 export * from './streamStopInput';
+export * from './workspaceSaveResponse';
 export * from './youtubeDownloadInput';
 export * from './youtubeDownloadResponse';

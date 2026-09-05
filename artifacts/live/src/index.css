@@ -265,6 +265,25 @@ input:focus, textarea:focus, select:focus { border-color:#5fa49d; box-shadow:0 0
 .login-submit { width:100%; height:45px; margin-top:4px; }
 .demo-note { margin-top:20px; display:flex; gap:9px; padding:12px; border:1px dashed #bfd1c7; border-radius:9px; background:#edf5ec; color:#5e756c; font-size:11px; line-height:1.5; }
 .error-note { padding:10px 12px; color:#9a4a3a; background:#fae5da; border-radius:7px; font-size:11px; }
+.license-renew { width:100%; margin-top:10px; }
+.license-status { display:flex; flex-direction:column; gap:5px; margin-top:16px; padding:12px; border:1px solid #d8e4d9; border-radius:9px; background:#f7faf4; color:#60736c; font-size:11px; }
+.license-status strong { color:#315c57; font-size:12px; }
+.owner-page { min-height:100dvh; background:hsl(var(--background)); }
+.owner-topbar { height:76px; display:flex; align-items:center; justify-content:space-between; padding:0 38px; border-bottom:1px solid hsl(var(--border)); background:#fbfaf6; }
+.owner-topbar .brand { padding:0; }
+.owner-content { max-width:1100px; margin:0 auto; padding:38px; }
+.owner-create { margin-bottom:18px; }
+.owner-create-form { display:grid; grid-template-columns:minmax(0,1fr) 170px auto; gap:12px; align-items:end; }
+.owner-create-form .button { height:39px; white-space:nowrap; }
+.owner-list { min-height:220px; }
+.license-list { display:flex; flex-direction:column; gap:8px; }
+.license-row { display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:14px; align-items:center; padding:12px; border:1px solid #e5e9df; border-radius:9px; background:#fbfdf8; }
+.license-row-main { display:flex; align-items:center; gap:10px; min-width:0; }
+.license-row-main strong, .license-row-main span { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.license-row-main strong { font-size:12px; margin-bottom:4px; }
+.license-row-main span { color:#68817a; font-size:10px; }
+.license-key-badge { width:30px; height:30px; flex:0 0 30px; display:grid; place-items:center; border-radius:8px; color:#287976; background:#e4f1e9; }
+.workspace-loading { min-height:100dvh; display:flex; align-items:center; justify-content:center; gap:10px; color:#47736b; font:12px var(--app-font-mono); background:hsl(var(--background)); }
 .mobile-menu { display:none; }
 .toast { position:fixed; right:22px; bottom:22px; padding:12px 15px; border-radius:9px; background:#214e4d; color:#eff9ed; box-shadow:0 8px 30px rgba(20,51,48,.22); font-size:12px; z-index:50; animation:rise .22s ease-out; }
 @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.5; } }
@@ -307,4 +326,12 @@ input:focus, textarea:focus, select:focus { border-color:#5fa49d; box-shadow:0 0
   .login-copy h1 { font-size:42px; }
   .login-copy p { font-size:12px; }
   .login-panel { min-height:57dvh; padding:30px 24px; }
+  .owner-topbar { height:auto; padding:18px 16px; gap:12px; }
+  .owner-topbar .brand-name { font-size:15px; }
+  .owner-topbar .button { padding:8px 10px; font-size:10px; }
+  .owner-content { padding:24px 16px 38px; }
+  .owner-create-form { grid-template-columns:1fr; align-items:stretch; }
+  .owner-create-form .button { width:100%; }
+  .license-row { grid-template-columns:1fr; gap:10px; }
+  .license-row .actions { justify-content:flex-start; }
 }
