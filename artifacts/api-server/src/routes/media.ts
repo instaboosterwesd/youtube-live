@@ -1,12 +1,13 @@
 import { createWriteStream, existsSync } from "node:fs";
 import { mkdir, readFile, readdir, rename, stat, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { Readable } from "node:stream";
+import { Readable, Transform } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { Router, type IRouter, type Request } from "express";
 import { createHmac, randomUUID } from "node:crypto";
 import os from "node:os";
 import { DownloadYoutubeVideoBody, DownloadYoutubeVideoResponse } from "@workspace/api-zod";
+import { ReplitConnectors } from "@replit/connectors-sdk";
 import youtubeDl, { create as createYoutubeDl } from "youtube-dl-exec";
 import ffmpegPath from "ffmpeg-static";
 import { authorizeLicenseSession } from "./licenses";
@@ -178,6 +179,75 @@ type YtSaveResponse = {
   } | null;
   message?: unknown;
 };
+
+type ApifyVideoResult = {
+  downloadedFileUrl?: unknown;
+  fileKey?: unknown;
+  title?: unknown;
+  durationSeconds?: unknown;
+};
+
+async function downloadWithApify(url: string, fileId: string): Promise<{ path: string; title: string; duration: string }> {
+  const connectors = new ReplitConnectors();
+  const actorResponse = await connectors.proxy(
+    "apify",
+    "/v2/actors/streamers~youtube-video-downloader/run-sync-get-dataset-items?format=json&clean=true",
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ videos: [{ url }] }),
+    },
+  );
+
+  if (!actorResponse.ok) {
+    const details = (await actorResponse.text()).trim().slice(-500);
+    throw new Error(`Apify downloader failed with HTTP ${actorResponse.status}.${details ? ` ${details}` : ""}`);
+  }
+
+  const items = (await actorResponse.json()) as unknown;
+  const result = Array.isArray(items) ? (items[0] as ApifyVideoResult | undefined) : undefined;
+  const downloadedFileUrl = typeof result?.downloadedFileUrl === "string" ? result.downloadedFileUrl : "";
+  if (!downloadedFileUrl) throw new Error("Apify did not return a downloadable video file.");
+
+  const fileUrl = new URL(downloadedFileUrl);
+  if (fileUrl.hostname !== "api.apify.com") {
+    throw new Error("Apify returned an unexpected media host.");
+  }
+  const mediaResponse = await connectors.proxy("apify", `${fileUrl.pathname}${fileUrl.search}`, { method: "GET" });
+  if (!mediaResponse.ok || !mediaResponse.body) {
+    throw new Error(`Apify media download failed with HTTP ${mediaResponse.status}.`);
+  }
+
+  await mkdir(mediaDir, { recursive: true });
+  const destination = path.join(mediaDir, `${fileId}.mp4`);
+  let received = 0;
+  const sizeLimit = new Transform({
+    transform(chunk: Buffer, _encoding, callback) {
+      received += chunk.length;
+      if (received > maxYoutubeDownloadBytes) {
+        callback(new Error("The Apify video is larger than 1.5 GB."));
+        return;
+      }
+      callback(null, chunk);
+    },
+  });
+
+  try {
+    await pipeline(Readable.fromWeb(mediaResponse.body as Parameters<typeof Readable.fromWeb>[0]), sizeLimit, createWriteStream(destination));
+  } catch (error) {
+    await unlink(destination).catch(() => undefined);
+    throw error;
+  }
+
+  const rawTitle = typeof result?.title === "string" ? result.title.trim() : "";
+  const fileKey = typeof result?.fileKey === "string" ? result.fileKey : "";
+  const fallbackTitle = fileKey.replace(/\.mp4$/i, "").replace(/^[^_]+_/, "").trim();
+  return {
+    path: destination,
+    title: rawTitle || fallbackTitle || "Downloaded YouTube video",
+    duration: formatDuration(result?.durationSeconds),
+  };
+}
 
 async function downloadWithYtSave(url: string, fileId: string): Promise<{ path: string; title: string; duration: string }> {
   const requestHeaders = {
@@ -364,8 +434,8 @@ async function downloadWithYtDlp(url: string, fileId: string): Promise<{ path: s
 
 async function downloadYoutubeVideo(url: string, fileId: string): Promise<{ path: string; title: string; duration: string }> {
   try {
-    return await downloadWithYtSave(url, fileId);
-  } catch (ytSaveError) {
+    return await downloadWithApify(url, fileId);
+  } catch (apifyError) {
     await Promise.all(
       (await readdir(mediaDir).catch(() => []))
         .filter((entry) => entry.startsWith(`${fileId}.`))
@@ -373,11 +443,22 @@ async function downloadYoutubeVideo(url: string, fileId: string): Promise<{ path
     );
 
     try {
-      return await downloadWithYtDlp(url, fileId);
-    } catch (ytDlpError) {
-      const ytSaveMessage = ytSaveError instanceof Error ? ytSaveError.message : "YTSave failed.";
-      const ytDlpMessage = ytDlpError instanceof Error ? ytDlpError.message : "yt-dlp failed.";
-      throw new Error(`YTSave: ${ytSaveMessage} | fallback: ${ytDlpMessage}`);
+      return await downloadWithYtSave(url, fileId);
+    } catch (ytSaveError) {
+      await Promise.all(
+        (await readdir(mediaDir).catch(() => []))
+          .filter((entry) => entry.startsWith(`${fileId}.`))
+          .map((entry) => unlink(path.join(mediaDir, entry)).catch(() => undefined)),
+      );
+
+      try {
+        return await downloadWithYtDlp(url, fileId);
+      } catch (ytDlpError) {
+        const apifyMessage = apifyError instanceof Error ? apifyError.message : "Apify failed.";
+        const ytSaveMessage = ytSaveError instanceof Error ? ytSaveError.message : "YTSave failed.";
+        const ytDlpMessage = ytDlpError instanceof Error ? ytDlpError.message : "yt-dlp failed.";
+        throw new Error(`Apify: ${apifyMessage} | YTSave: ${ytSaveMessage} | yt-dlp: ${ytDlpMessage}`);
+      }
     }
   }
 }
