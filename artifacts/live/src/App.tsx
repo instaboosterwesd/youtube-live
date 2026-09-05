@@ -138,11 +138,64 @@ function ensureBundledFaceVideo(value: DataState): DataState {
 function normalizeWorkspace(value: unknown): DataState {
   if (!value || typeof value !== "object") return seed;
   const candidate = value as Partial<DataState>;
+  const rawVideos = Array.isArray(candidate.videos) ? candidate.videos : [];
+  const rawGroups = Array.isArray(candidate.groups) ? candidate.groups : [];
+  const rawChannels = Array.isArray(candidate.channels) ? candidate.channels : [];
+  const rawActivities = Array.isArray(candidate.activities) ? candidate.activities : [];
   return ensureBundledFaceVideo({
-    channels: Array.isArray(candidate.channels) ? candidate.channels : [],
-    videos: Array.isArray(candidate.videos) ? candidate.videos : [],
-    groups: Array.isArray(candidate.groups) ? candidate.groups : [],
-    activities: Array.isArray(candidate.activities) ? candidate.activities : [],
+    channels: rawChannels.filter((item): item is LiveChannel => Boolean(item && typeof item === "object")).map((item, index) => {
+      const channel = item as Partial<LiveChannel>;
+      return {
+        ...channel,
+        id: typeof channel.id === "string" ? channel.id : `legacy-channel-${index}`,
+        title: typeof channel.title === "string" ? channel.title : "Untitled channel",
+        platform: typeof channel.platform === "string" ? channel.platform : "Custom RTMP",
+        status: channel.status === "live" || channel.status === "scheduled" ? channel.status : "stopped",
+        groupId: typeof channel.groupId === "string" ? channel.groupId : "",
+        streamUrl: typeof channel.streamUrl === "string" ? channel.streamUrl : "",
+        streamKey: typeof channel.streamKey === "string" ? channel.streamKey : "",
+        viewers: typeof channel.viewers === "number" ? channel.viewers : 0,
+        startedAt: typeof channel.startedAt === "string" ? channel.startedAt : null,
+        thumbnailColor: typeof channel.thumbnailColor === "string" ? channel.thumbnailColor : colors[0],
+        createdAt: typeof channel.createdAt === "string" ? channel.createdAt : now(),
+      } as LiveChannel;
+    }),
+    videos: rawVideos.filter((item): item is VideoItem => Boolean(item && typeof item === "object")).map((item, index) => {
+      const video = item as Partial<VideoItem>;
+      return {
+        ...video,
+        id: typeof video.id === "string" ? video.id : `legacy-video-${index}`,
+        title: typeof video.title === "string" ? video.title : "Untitled video",
+        duration: typeof video.duration === "string" ? video.duration : "00:00",
+        status: video.status === "draft" || video.status === "archived" ? video.status : "published",
+        groupId: typeof video.groupId === "string" ? video.groupId : "",
+        sourceUrl: typeof video.sourceUrl === "string" ? video.sourceUrl : "",
+        thumbnailColor: typeof video.thumbnailColor === "string" ? video.thumbnailColor : colors[1],
+        views: typeof video.views === "number" ? video.views : 0,
+        createdAt: typeof video.createdAt === "string" ? video.createdAt : now(),
+      } as VideoItem;
+    }),
+    groups: rawGroups.filter((item): item is VideoGroup => Boolean(item && typeof item === "object")).map((item, index) => {
+      const group = item as Partial<VideoGroup>;
+      return {
+        ...group,
+        id: typeof group.id === "string" ? group.id : `legacy-group-${index}`,
+        name: typeof group.name === "string" ? group.name : "Untitled category",
+        description: typeof group.description === "string" ? group.description : "",
+        videoIds: Array.isArray(group.videoIds) ? group.videoIds.filter((id): id is string => typeof id === "string") : [],
+        createdAt: typeof group.createdAt === "string" ? group.createdAt : now(),
+      } as VideoGroup;
+    }),
+    activities: rawActivities.filter((item): item is Activity => Boolean(item && typeof item === "object")).map((item, index) => {
+      const activity = item as Partial<Activity>;
+      return {
+        ...activity,
+        id: typeof activity.id === "string" ? activity.id : `legacy-activity-${index}`,
+        type: typeof activity.type === "string" ? activity.type : "edit",
+        message: typeof activity.message === "string" ? activity.message : "Workspace updated",
+        time: typeof activity.time === "string" ? activity.time : "Recently",
+      } as Activity;
+    }),
   });
 }
 
@@ -307,7 +360,7 @@ function OwnerPage() {
   const [error, setError] = useState("");
   const load = async (ownerPassword: string) => {
     const result = await apiJson<{ licenses: LicenseSession[] }>("/api/licenses", { headers: { "X-Owner-Password": ownerPassword } });
-    setLicenses(result.licenses);
+    setLicenses(Array.isArray(result.licenses) ? result.licenses : []);
   };
   const signIn = async (event:FormEvent) => {
     event.preventDefault(); setBusy(true); setError("");
