@@ -11,6 +11,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import gtaVideoUrl from "@assets/ytvid_-M47B7wsm7c_1080p60.mp4";
+import gtv5FaceVideoUrl from "@assets/WhatsApp Video 2026-09-04 at 11.30.43 PM.mp4";
 import { getStreamStatus, startStream, stopStream } from "@workspace/api-client-react";
 
 type LiveStatus = "live" | "scheduled" | "stopped";
@@ -63,14 +64,56 @@ const seed: DataState = {
       views: 0,
       createdAt: now(),
     },
+    {
+      id: "vid-gtv5-face",
+      title: "WhatsApp Video 2026-09-04 at 11.30.43 PM",
+      duration: "00:00",
+      status: "published",
+      groupId: "gtv5face",
+      sourceUrl: gtv5FaceVideoUrl,
+      thumbnailColor: "#9a6591",
+      views: 0,
+      createdAt: now(),
+    },
   ],
-  groups: [{ id: "gta", name: "GTA", description: "Local GTA video category.", videoIds: ["vid-gta-local"], createdAt: now() }],
-  activities: [{ id: "a-gta", type: "group", message: "GTA category is ready with the local video", time: "Just now" }],
+  groups: [
+    { id: "gta", name: "GTA", description: "Local GTA video category.", videoIds: ["vid-gta-local"], createdAt: now() },
+    { id: "gtv5face", name: "GTV 5 face", description: "Face recording overlay video.", videoIds: ["vid-gtv5-face"], createdAt: now() },
+  ],
+  activities: [
+    { id: "a-gtv5-face", type: "video", message: "GTV 5 face video is ready", time: "Just now" },
+    { id: "a-gta", type: "group", message: "GTA category is ready with the local video", time: "Just now" },
+  ],
 };
+
+function ensureBundledFaceVideo(value: DataState): DataState {
+  const existingGroup = value.groups.find((group) => ["gtv5face", "gtv 5 face"].includes(group.name.trim().toLowerCase()));
+  const groupId = existingGroup?.id || "gtv5face";
+  const existingVideo = value.videos.find((video) => video.id === "vid-gtv5-face" || video.title.toLowerCase() === "whatsapp video 2026-09-04 at 11.30.43 pm");
+  const video = existingVideo || {
+    id: "vid-gtv5-face",
+    title: "WhatsApp Video 2026-09-04 at 11.30.43 PM",
+    duration: "00:00",
+    status: "published" as VideoStatus,
+    groupId,
+    sourceUrl: gtv5FaceVideoUrl,
+    thumbnailColor: "#9a6591",
+    views: 0,
+    createdAt: now(),
+  };
+  const groups = existingGroup
+    ? value.groups.map((group) => group.id === groupId ? { ...group, videoIds: group.videoIds.includes(video.id) ? group.videoIds : [...group.videoIds, video.id] } : group)
+    : [...value.groups, { id: groupId, name: "GTV 5 face", description: "Face recording overlay video.", videoIds: [video.id], createdAt: now() }];
+  const videos = existingVideo
+    ? value.videos.map((item) => item.id === video.id ? { ...item, groupId, sourceUrl: item.sourceUrl || gtv5FaceVideoUrl } : item)
+    : [...value.videos, video];
+  const alreadyAnnounced = value.activities.some((activity) => activity.message.toLowerCase().includes("gtv 5 face video"));
+  return { ...value, groups, videos, activities: alreadyAnnounced ? value.activities : [{ id: uid("act"), type: "video", message: "GTV 5 face video is ready", time: "Just now" }, ...value.activities].slice(0, 8) };
+}
 
 function useWorkspace() {
   const [data, setData] = useState<DataState>(() => {
-    try { return JSON.parse(localStorage.getItem("signal-desk-data-v2") || "null") || seed; } catch { return seed; }
+    try { return ensureBundledFaceVideo(JSON.parse(localStorage.getItem("signal-desk-data-v2") || "null") || seed); } catch { return seed; }
   });
   const [user, setUser] = useState(() => localStorage.getItem("signal-desk-user") || "");
   const [toast, setToast] = useState("");

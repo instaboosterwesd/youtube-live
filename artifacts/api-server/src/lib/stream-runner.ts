@@ -35,10 +35,14 @@ type StreamProcess = {
   restartTimer?: NodeJS.Timeout;
 };
 
-const assetName = "ytvid_-M47B7wsm7c_1080p60.mp4";
+const assetNamesByCategory: Record<string, string> = {
+  gta: "ytvid_-M47B7wsm7c_1080p60.mp4",
+  "gtv 5 face": "WhatsApp Video 2026-09-04 at 11.30.43 PM.mp4",
+  gtv5face: "WhatsApp Video 2026-09-04 at 11.30.43 PM.mp4",
+};
 const processes = new Map<string, StreamProcess>();
 
-function findAsset(): string | null {
+function findAsset(assetName: string): string | null {
   const candidates = [
     path.resolve(process.cwd(), "attached_assets", assetName),
     path.resolve(process.cwd(), "..", "..", "attached_assets", assetName),
@@ -52,15 +56,17 @@ function getVideoPath(category: string, explicitSource?: string): string {
     return explicitSource;
   }
 
-  if (category.trim().toLowerCase() !== "gta") {
+  const categoryKey = category.trim().toLowerCase();
+  const assetName = assetNamesByCategory[categoryKey];
+  if (!assetName) {
     throw new Error(
       `The ${category} category is saved in this browser but does not have a server-side video source yet.`,
     );
   }
 
-  const videoPath = findAsset();
+  const videoPath = findAsset(assetName);
   if (!videoPath) {
-    throw new Error("The GTA video file is not available on the server.");
+    throw new Error(`The ${category} video file is not available on the server.`);
   }
   return videoPath;
 }
