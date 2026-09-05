@@ -59,6 +59,16 @@ function licenseIsActive(record: LicenseRecord): boolean {
   return record.active && new Date(record.expiresAt).getTime() > Date.now();
 }
 
+export async function authorizeLicenseSession(key: string | undefined, clientId: string | undefined): Promise<boolean> {
+  if (!key || !validKey(key) || !clientId || !validClientId(clientId)) return false;
+  try {
+    const record = await findLicense(key);
+    return Boolean(record && licenseIsActive(record));
+  } catch {
+    return false;
+  }
+}
+
 function requireOwner(req: Request, res: Response): boolean {
   if (ownerAuthorized(req)) return true;
   res.status(401).json({ error: "Owner password is incorrect." });

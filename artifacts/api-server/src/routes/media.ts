@@ -1,23 +1,27 @@
-import { createWriteStream } from "node:fs";
-import { mkdir, readdir, stat, unlink, writeFile } from "node:fs/promises";
+import { createWriteStream, existsSync } from "node:fs";
+import { mkdir, readdir, rename, stat, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pipeline } from "node:stream/promises";
-import { Router, type IRouter } from "express";
+import { Router, type IRouter, type Request } from "express";
 import { randomUUID } from "node:crypto";
 import os from "node:os";
 import { DownloadYoutubeVideoBody, DownloadYoutubeVideoResponse } from "@workspace/api-zod";
 import youtubeDl, { create as createYoutubeDl } from "youtube-dl-exec";
 import ffmpegPath from "ffmpeg-static";
+import { authorizeLicenseSession } from "./licenses";
 
 const router: IRouter = Router();
 const mediaDir = path.resolve(process.cwd(), "attached_assets", "live-media");
+const importedYoutubeCookiesPath = path.join(mediaDir, "youtube-cookies.txt");
 const maxUploadBytes = 1.5 * 1024 * 1024 * 1024;
 const youtubeDownloader = process.env.YT_DLP_BIN?.trim()
   ? createYoutubeDl(process.env.YT_DLP_BIN.trim())
   : youtubeDl;
 let youtubeCookiesFilePromise: Promise<string | undefined> | undefined;
+let importedYoutubeCookiesFile = existsSync(importedYoutubeCookiesPath) ? importedYoutubeCookiesPath : undefined;
 
 async function resolveYoutubeCookiesFile(): Promise<string | undefined> {
+  if (importedYoutubeCookiesFile) return importedYoutubeCookiesFile;
   const configuredFile = process.env.YOUTUBE_COOKIES_FILE?.trim();
   if (configuredFile) return configuredFile;
 
@@ -36,6 +40,10 @@ async function resolveYoutubeCookiesFile(): Promise<string | undefined> {
   }
 
   return youtubeCookiesFilePromise;
+}
+
+async function authorizeMediaSettings(req: Request): Promise<boolean> {
+  return authorizeLicenseSession(req.header("x-license-key"), req.header("x-client-id"));
 }
 
 function getMediaName(rawName: string): string {
@@ -155,6 +163,66 @@ router.post("/media/upload", async (req, res): Promise<void> => {
     req.log.warn({ error: error instanceof Error ? error.message : "unknown error" }, "Media upload failed");
     res.status(400).json({ error: "The video upload could not be completed." });
   }
+});
+
+router.get("/media/youtube-cookies", async (req, res): Promise<void> => {
+  if (!(await authorizeMediaSettings(req))) {
+    res.status(401).json({ error: "A valid licensed workspace is required." });
+    return;
+  }
+  res.json({
+    configured: Boolean(importedYoutubeCookiesFile || process.env.YOUTUBE_COOKIES_FILE?.trim() || process.env.YOUTUBE_COOKIES_B64?.trim()),
+  });
+});
+
+router.post("/media/youtube-cookies", async (req, res): Promise<void> => {
+  if (!(await authorizeMediaSettings(req))) {
+    res.status(401).json({ error: "A valid licensed workspace is required." });
+    return;
+  }
+
+  const contentType = req.header("content-type") || "";
+  if (!contentType.startsWith("text/plain")) {
+    res.status(400).json({ error: "Upload a Netscape-format cookies.txt file." });
+    return;
+  }
+
+  await mkdir(mediaDir, { recursive: true });
+  const tempPath = path.join(mediaDir, `.youtube-cookies-${randomUUID()}.tmp`);
+  let received = 0;
+  req.on("data", (chunk: Buffer) => {
+    received += chunk.length;
+    if (received > 5 * 1024 * 1024) req.destroy(new Error("Cookie file is larger than 5 MB."));
+  });
+
+  try {
+    await pipeline(req, createWriteStream(tempPath, { mode: 0o600 }));
+    const fileStats = await stat(tempPath);
+    if (!fileStats.size) {
+      await unlink(tempPath).catch(() => undefined);
+      res.status(400).json({ error: "The cookie file is empty." });
+      return;
+    }
+    await rename(tempPath, importedYoutubeCookiesPath);
+    importedYoutubeCookiesFile = importedYoutubeCookiesPath;
+    youtubeCookiesFilePromise = undefined;
+    res.json({ configured: true });
+  } catch (error) {
+    await unlink(tempPath).catch(() => undefined);
+    req.log.warn({ error: error instanceof Error ? error.message : "unknown" }, "YouTube cookie import failed");
+    res.status(400).json({ error: "The YouTube cookie file could not be imported." });
+  }
+});
+
+router.delete("/media/youtube-cookies", async (req, res): Promise<void> => {
+  if (!(await authorizeMediaSettings(req))) {
+    res.status(401).json({ error: "A valid licensed workspace is required." });
+    return;
+  }
+  await unlink(importedYoutubeCookiesPath).catch(() => undefined);
+  importedYoutubeCookiesFile = undefined;
+  youtubeCookiesFilePromise = undefined;
+  res.json({ configured: false });
 });
 
 router.post("/media/youtube-download", async (req, res): Promise<void> => {
