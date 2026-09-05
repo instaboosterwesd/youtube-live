@@ -7,3 +7,4 @@
 - [Firebase licensing security](firebase-licensing-security.md) — public Realtime Database rules make app-level owner passwords non-secure; harden rules/auth before production.
 - [Public media builds](public-media-builds.md) — ignored local media must not be statically imported by the frontend; clean public checkouts should use runtime uploads/API media.
 - [Railway project access](railway-project-access.md) — Railway CLI can be authenticated while no project is available; Personal workspace creation may require an upgrade.
+- [YTSave downloader provider](youtube-ytsave-provider.md) — use a fresh PHP session and client HMAC mint before requesting YTSave media URLs.
