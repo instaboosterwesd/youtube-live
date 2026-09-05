@@ -5,6 +5,8 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { StreamStartInputAspectRatio } from './streamStartInputAspectRatio';
+import type { StreamStartInputFacePosition } from './streamStartInputFacePosition';
 
 export interface StreamStartInput {
   /** @minLength 1 */
@@ -14,4 +16,19 @@ export interface StreamStartInput {
   /** @minLength 1 */
   category: string;
   videoSource?: string;
+  faceCategory?: string;
+  faceSource?: string;
+  aspectRatio?: StreamStartInputAspectRatio;
+  facePosition?: StreamStartInputFacePosition;
+  /**
+     * @minimum 0.1
+     * @maximum 0.6
+     */
+  faceScale?: number;
+  /**
+     * @minimum 1
+     * @maximum 1440
+     */
+  durationMinutes?: number;
+  autoRestart?: boolean;
 }

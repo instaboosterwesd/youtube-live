@@ -24,13 +24,28 @@ export const HealthCheckResponse = zod.object({
 
 
 
+export const startStreamBodyAspectRatioDefault = `full`;
+export const startStreamBodyFacePositionDefault = `bottom-right`;
+export const startStreamBodyFaceScaleDefault = 0.25;
+export const startStreamBodyFaceScaleMin = 0.1;
+export const startStreamBodyFaceScaleMax = 0.6;
 
+export const startStreamBodyDurationMinutesMax = 1440;
+
+export const startStreamBodyAutoRestartDefault = false;
 
 export const StartStreamBody = zod.object({
   "streamId": zod.string().min(1),
   "ingestUrl": zod.string().min(1),
   "category": zod.string().min(1),
-  "videoSource": zod.string().optional()
+  "videoSource": zod.string().optional(),
+  "faceCategory": zod.string().optional(),
+  "faceSource": zod.string().optional(),
+  "aspectRatio": zod.enum(['shorts', 'full', 'square']).default(startStreamBodyAspectRatioDefault),
+  "facePosition": zod.enum(['top-left', 'top-right', 'bottom-left', 'bottom-right', 'center']).default(startStreamBodyFacePositionDefault),
+  "faceScale": zod.number().min(startStreamBodyFaceScaleMin).max(startStreamBodyFaceScaleMax).default(startStreamBodyFaceScaleDefault),
+  "durationMinutes": zod.number().min(1).max(startStreamBodyDurationMinutesMax).optional(),
+  "autoRestart": zod.boolean().default(startStreamBodyAutoRestartDefault)
 })
 
 export const StartStreamResponse = zod.object({
@@ -72,5 +87,36 @@ export const GetStreamStatusResponse = zod.object({
   "message": zod.string(),
   "pid": zod.number().nullable()
 })
+
+
+/**
+ * @summary Upload a local video for server-side streaming
+ */
+
+
+
+export const UploadMediaHeader = zod.object({
+  "X-File-Name": zod.string().min(1)
+})
+
+export const UploadMediaResponse = zod.object({
+  "fileId": zod.string(),
+  "filename": zod.string(),
+  "sourcePath": zod.string(),
+  "playbackUrl": zod.string()
+})
+
+
+/**
+ * @summary Serve an uploaded local media file
+ */
+
+
+
+export const GetMediaFileParams = zod.object({
+  "fileId": zod.coerce.string().min(1)
+})
+
+export const GetMediaFileResponse = zod.unknown()
 
 

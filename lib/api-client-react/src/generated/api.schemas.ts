@@ -9,6 +9,26 @@ export interface HealthStatus {
   status: string;
 }
 
+export type StreamStartInputAspectRatio = typeof StreamStartInputAspectRatio[keyof typeof StreamStartInputAspectRatio];
+
+
+export const StreamStartInputAspectRatio = {
+  shorts: 'shorts',
+  full: 'full',
+  square: 'square',
+} as const;
+
+export type StreamStartInputFacePosition = typeof StreamStartInputFacePosition[keyof typeof StreamStartInputFacePosition];
+
+
+export const StreamStartInputFacePosition = {
+  'top-left': 'top-left',
+  'top-right': 'top-right',
+  'bottom-left': 'bottom-left',
+  'bottom-right': 'bottom-right',
+  center: 'center',
+} as const;
+
 export interface StreamStartInput {
   /** @minLength 1 */
   streamId: string;
@@ -17,6 +37,21 @@ export interface StreamStartInput {
   /** @minLength 1 */
   category: string;
   videoSource?: string;
+  faceCategory?: string;
+  faceSource?: string;
+  aspectRatio?: StreamStartInputAspectRatio;
+  facePosition?: StreamStartInputFacePosition;
+  /**
+     * @minimum 0.1
+     * @maximum 0.6
+     */
+  faceScale?: number;
+  /**
+     * @minimum 1
+     * @maximum 1440
+     */
+  durationMinutes?: number;
+  autoRestart?: boolean;
 }
 
 export interface StreamStopInput {
@@ -39,5 +74,12 @@ export interface StreamControlResponse {
   message: string;
   /** @nullable */
   pid: number | null;
+}
+
+export interface MediaUploadResponse {
+  fileId: string;
+  filename: string;
+  sourcePath: string;
+  playbackUrl: string;
 }
 

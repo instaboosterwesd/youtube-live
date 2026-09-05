@@ -28,6 +28,14 @@ router.post("/stream/start", (req, res): void => {
       streamId: parsed.data.streamId,
       ingestUrl: parsed.data.ingestUrl,
       category: parsed.data.category,
+      videoSource: parsed.data.videoSource,
+      faceCategory: parsed.data.faceCategory,
+      faceSource: parsed.data.faceSource,
+      aspectRatio: parsed.data.aspectRatio,
+      facePosition: parsed.data.facePosition,
+      faceScale: parsed.data.faceScale,
+      durationMinutes: parsed.data.durationMinutes,
+      autoRestart: parsed.data.autoRestart,
     });
     res.status(202).json(StartStreamResponse.parse(result));
   } catch (error) {

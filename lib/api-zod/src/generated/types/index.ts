@@ -7,7 +7,10 @@
  */
 
 export * from './healthStatus';
+export * from './mediaUploadResponse';
 export * from './streamControlResponse';
 export * from './streamControlResponseStatus';
 export * from './streamStartInput';
+export * from './streamStartInputAspectRatio';
+export * from './streamStartInputFacePosition';
 export * from './streamStopInput';

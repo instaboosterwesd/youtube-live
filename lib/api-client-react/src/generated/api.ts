@@ -21,6 +21,7 @@ import type {
 
 import type {
   HealthStatus,
+  MediaUploadResponse,
   StreamControlResponse,
   StreamStartInput,
   StreamStopInput
@@ -339,6 +340,154 @@ export function useGetStreamStatus<TData = Awaited<ReturnType<typeof getStreamSt
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetStreamStatusQueryOptions(streamId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUploadMediaUrl = () => {
+
+
+
+
+  return `/api/media/upload`
+}
+
+/**
+ * @summary Upload a local video for server-side streaming
+ */
+export const uploadMedia = async (uploadMediaBody: Blob, options?: Parameters<typeof customFetch>[1]): Promise<MediaUploadResponse> => {
+
+  return customFetch<MediaUploadResponse>(getUploadMediaUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/octet-stream', ...options?.headers },
+    body: uploadMediaBody
+  }
+);}
+
+
+
+
+
+export const getUploadMediaMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadMedia>>, TError,{data: BodyType<Blob>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof uploadMedia>>, TError,{data: BodyType<Blob>}, TContext> => {
+
+const mutationKey = ['uploadMedia'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof uploadMedia>>, {data: BodyType<Blob>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  uploadMedia(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UploadMediaMutationResult = NonNullable<Awaited<ReturnType<typeof uploadMedia>>>
+    export type UploadMediaMutationBody = BodyType<Blob>
+    export type UploadMediaMutationError = ErrorType<void>
+
+    /**
+ * @summary Upload a local video for server-side streaming
+ */
+export const useUploadMedia = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadMedia>>, TError,{data: BodyType<Blob>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof uploadMedia>>,
+        TError,
+        {data: BodyType<Blob>},
+        TContext
+      > => {
+      return useMutation(getUploadMediaMutationOptions(options));
+    }
+
+export const getGetMediaFileUrl = (fileId: string,) => {
+
+
+
+
+  return `/api/media/files/${fileId}`
+}
+
+/**
+ * @summary Serve an uploaded local media file
+ */
+export const getMediaFile = async (fileId: string, options?: Parameters<typeof customFetch>[1]): Promise<Blob> => {
+
+  return customFetch<Blob>(getGetMediaFileUrl(fileId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetMediaFileQueryKey = (fileId: string,) => {
+    return [
+    `/api/media/files/${fileId}`
+    ] as const;
+    }
+
+
+export const getGetMediaFileQueryOptions = <TData = Awaited<ReturnType<typeof getMediaFile>>, TError = ErrorType<void>>(fileId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMediaFile>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMediaFileQueryKey(fileId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMediaFile>>> = ({ signal }) => getMediaFile(fileId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: fileId !== null && fileId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMediaFile>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetMediaFileQueryResult = NonNullable<Awaited<ReturnType<typeof getMediaFile>>>
+export type GetMediaFileQueryError = ErrorType<void>
+
+
+/**
+ * @summary Serve an uploaded local media file
+ */
+
+export function useGetMediaFile<TData = Awaited<ReturnType<typeof getMediaFile>>, TError = ErrorType<void>>(
+ fileId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMediaFile>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetMediaFileQueryOptions(fileId,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

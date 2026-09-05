@@ -12,6 +12,8 @@ tags:
     description: Health operations
   - name: streaming
     description: Live stream control operations
+  - name: media
+    description: Local media upload operations
 paths:
   /healthz:
     get:
@@ -89,6 +91,60 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StreamControlResponse"
+  /media/upload:
+    post:
+      operationId: uploadMedia
+      tags: [media]
+      summary: Upload a local video for server-side streaming
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+          video/*:
+            schema:
+              type: string
+              format: binary
+      parameters:
+        - name: X-File-Name
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        "201":
+          description: Media is ready for streaming
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaUploadResponse"
+        "400":
+          description: Invalid media upload
+  /media/files/{fileId}:
+    get:
+      operationId: getMediaFile
+      tags: [media]
+      summary: Serve an uploaded local media file
+      parameters:
+        - name: fileId
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        "200":
+          description: Media file
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: Media file not found
 components:
   schemas:
     HealthStatus:
@@ -112,6 +168,30 @@ components:
           minLength: 1
         videoSource:
           type: string
+        faceCategory:
+          type: string
+        faceSource:
+          type: string
+        aspectRatio:
+          type: string
+          enum: [shorts, full, square]
+          default: full
+        facePosition:
+          type: string
+          enum: [top-left, top-right, bottom-left, bottom-right, center]
+          default: bottom-right
+        faceScale:
+          type: number
+          minimum: 0.1
+          maximum: 0.6
+          default: 0.25
+        durationMinutes:
+          type: number
+          minimum: 1
+          maximum: 1440
+        autoRestart:
+          type: boolean
+          default: false
       required:
         - streamId
         - ingestUrl
@@ -141,4 +221,20 @@ components:
         - status
         - message
         - pid
+    MediaUploadResponse:
+      type: object
+      properties:
+        fileId:
+          type: string
+        filename:
+          type: string
+        sourcePath:
+          type: string
+        playbackUrl:
+          type: string
+      required:
+        - fileId
+        - filename
+        - sourcePath
+        - playbackUrl
 
