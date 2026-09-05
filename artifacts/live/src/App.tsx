@@ -10,8 +10,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
-import gtaVideoUrl from "@assets/ytvid_-M47B7wsm7c_1080p60.mp4";
-import gtv5FaceVideoUrl from "@assets/WhatsApp Video 2026-09-04 at 11.30.43 PM.mp4";
 import { downloadYoutubeVideo, getStreamStatus, startStream, stopStream } from "@workspace/api-client-react";
 
 type LiveStatus = "live" | "scheduled" | "stopped";
@@ -57,6 +55,10 @@ const fmtTime = (date: string | null) => {
 };
 const fmtNumber = (n: number) => new Intl.NumberFormat("en-US").format(n);
 const colors = ["#2c8b88", "#da814b", "#607a98", "#788d52", "#9a6591", "#3f6d66"];
+// These demo files are intentionally not bundled in the public repository.
+// Users can add a video through the upload or YouTube download flow instead.
+const gtaVideoUrl = "";
+const gtv5FaceVideoUrl = "";
 const platformFromUrl = (url: string) => {
   const value = url.toLowerCase();
   if (value.includes("youtube")) return "YouTube";
