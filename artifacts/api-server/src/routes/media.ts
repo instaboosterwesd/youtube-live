@@ -1,5 +1,5 @@
 import { createWriteStream, existsSync } from "node:fs";
-import { mkdir, readdir, rename, stat, unlink, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rename, stat, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pipeline } from "node:stream/promises";
 import { Router, type IRouter, type Request } from "express";
@@ -44,6 +44,50 @@ async function resolveYoutubeCookiesFile(): Promise<string | undefined> {
 
 async function authorizeMediaSettings(req: Request): Promise<boolean> {
   return authorizeLicenseSession(req.header("x-license-key"), req.header("x-client-id"));
+}
+
+function normalizeYoutubeCookies(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) throw new Error("The cookie file is empty.");
+  if (!trimmed.startsWith("[")) return trimmed.endsWith("\n") ? trimmed : `${trimmed}\n`;
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(trimmed);
+  } catch {
+    throw new Error("The browser cookie JSON could not be parsed.");
+  }
+  if (!Array.isArray(parsed) || parsed.length === 0) {
+    throw new Error("The browser cookie JSON does not contain any cookies.");
+  }
+
+  const lines = parsed.map((entry) => {
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+      throw new Error("The browser cookie JSON contains an invalid cookie.");
+    }
+    const cookie = entry as Record<string, unknown>;
+    const domain = typeof cookie.domain === "string" ? cookie.domain.trim() : "";
+    const name = typeof cookie.name === "string" ? cookie.name : "";
+    const value = typeof cookie.value === "string" ? cookie.value : "";
+    const cookiePath = typeof cookie.path === "string" && cookie.path ? cookie.path : "/";
+    const expirationDate = Number(cookie.expirationDate);
+    if (!domain || !name || !Number.isFinite(expirationDate)) {
+      throw new Error("The browser cookie JSON is missing required fields.");
+    }
+    if ([domain, name, value, cookiePath].some((part) => /[\r\n\t]/.test(part))) {
+      throw new Error("The browser cookie JSON contains unsupported characters.");
+    }
+    return [
+      domain,
+      domain.startsWith(".") ? "TRUE" : "FALSE",
+      cookiePath,
+      cookie.secure ? "TRUE" : "FALSE",
+      Math.max(0, Math.floor(expirationDate)),
+      name,
+      value,
+    ].join("\t");
+  });
+  return `# Netscape HTTP Cookie File\n${lines.join("\n")}\n`;
 }
 
 function getMediaName(rawName: string): string {
@@ -182,8 +226,8 @@ router.post("/media/youtube-cookies", async (req, res): Promise<void> => {
   }
 
   const contentType = req.header("content-type") || "";
-  if (!contentType.startsWith("text/plain")) {
-    res.status(400).json({ error: "Upload a Netscape-format cookies.txt file." });
+  if (!contentType.startsWith("text/plain") && !contentType.startsWith("application/json")) {
+    res.status(400).json({ error: "Upload a cookies.txt or browser JSON cookie export." });
     return;
   }
 
@@ -197,20 +241,17 @@ router.post("/media/youtube-cookies", async (req, res): Promise<void> => {
 
   try {
     await pipeline(req, createWriteStream(tempPath, { mode: 0o600 }));
-    const fileStats = await stat(tempPath);
-    if (!fileStats.size) {
-      await unlink(tempPath).catch(() => undefined);
-      res.status(400).json({ error: "The cookie file is empty." });
-      return;
-    }
+    const normalizedCookies = normalizeYoutubeCookies(await readFile(tempPath, "utf8"));
+    await writeFile(tempPath, normalizedCookies, { mode: 0o600 });
     await rename(tempPath, importedYoutubeCookiesPath);
     importedYoutubeCookiesFile = importedYoutubeCookiesPath;
     youtubeCookiesFilePromise = undefined;
     res.json({ configured: true });
   } catch (error) {
     await unlink(tempPath).catch(() => undefined);
-    req.log.warn({ error: error instanceof Error ? error.message : "unknown" }, "YouTube cookie import failed");
-    res.status(400).json({ error: "The YouTube cookie file could not be imported." });
+    const message = error instanceof Error ? error.message : "The YouTube cookie file could not be imported.";
+    req.log.warn({ error: message }, "YouTube cookie import failed");
+    res.status(400).json({ error: message });
   }
 });
 
