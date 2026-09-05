@@ -32,7 +32,8 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", router);
 
-const frontendDist = process.env["FRONTEND_DIST"] ?? path.resolve(process.cwd(), "artifacts/live/dist/public");
+const defaultFrontendDist = path.resolve(import.meta.dirname, "../../live/dist/public");
+const frontendDist = process.env["FRONTEND_DIST"] ?? defaultFrontendDist;
 
 app.use(express.static(frontendDist));
 app.get(/^(?!\/api(?:\/|$)).*/, (_req, res, next) => {
