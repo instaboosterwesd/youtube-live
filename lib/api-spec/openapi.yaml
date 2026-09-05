@@ -188,10 +188,19 @@ components:
           minLength: 1
         videoSource:
           type: string
+        videoSources:
+          type: array
+          items:
+            type: string
+            minLength: 1
         faceCategory:
           type: string
         faceSource:
           type: string
+        faceSources:
+          type: array
+          items:
+            type: string
         aspectRatio:
           type: string
           enum: [shorts, full, square]

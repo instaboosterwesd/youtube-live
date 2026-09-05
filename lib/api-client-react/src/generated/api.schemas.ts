@@ -37,8 +37,11 @@ export interface StreamStartInput {
   /** @minLength 1 */
   category: string;
   videoSource?: string;
+  /** @items.minLength 1 */
+  videoSources?: string[];
   faceCategory?: string;
   faceSource?: string;
+  faceSources?: string[];
   aspectRatio?: StreamStartInputAspectRatio;
   facePosition?: StreamStartInputFacePosition;
   /**

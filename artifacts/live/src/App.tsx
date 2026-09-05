@@ -60,6 +60,7 @@ const seed: DataState = {
       status: "published",
       groupId: "gta",
       sourceUrl: gtaVideoUrl,
+      serverSource: "__asset:gta",
       thumbnailColor: "#2c8b88",
       views: 0,
       createdAt: now(),
@@ -71,6 +72,7 @@ const seed: DataState = {
       status: "published",
       groupId: "gtv5face",
       sourceUrl: gtv5FaceVideoUrl,
+      serverSource: "__asset:gtv5face",
       thumbnailColor: "#9a6591",
       views: 0,
       createdAt: now(),
@@ -87,9 +89,13 @@ const seed: DataState = {
 };
 
 function ensureBundledFaceVideo(value: DataState): DataState {
-  const existingGroup = value.groups.find((group) => ["gtv5face", "gtv 5 face"].includes(group.name.trim().toLowerCase()));
+  const normalizedValue = {
+    ...value,
+    videos: value.videos.map((item) => item.id === "vid-gta-local" ? { ...item, serverSource: item.serverSource || "__asset:gta" } : item),
+  };
+  const existingGroup = normalizedValue.groups.find((group) => ["gtv5face", "gtv 5 face"].includes(group.name.trim().toLowerCase()));
   const groupId = existingGroup?.id || "gtv5face";
-  const existingVideo = value.videos.find((video) => video.id === "vid-gtv5-face" || video.title.toLowerCase() === "whatsapp video 2026-09-04 at 11.30.43 pm");
+  const existingVideo = normalizedValue.videos.find((video) => video.id === "vid-gtv5-face" || video.title.toLowerCase() === "whatsapp video 2026-09-04 at 11.30.43 pm");
   const video = existingVideo || {
     id: "vid-gtv5-face",
     title: "WhatsApp Video 2026-09-04 at 11.30.43 PM",
@@ -97,18 +103,19 @@ function ensureBundledFaceVideo(value: DataState): DataState {
     status: "published" as VideoStatus,
     groupId,
     sourceUrl: gtv5FaceVideoUrl,
+    serverSource: "__asset:gtv5face",
     thumbnailColor: "#9a6591",
     views: 0,
     createdAt: now(),
   };
   const groups = existingGroup
-    ? value.groups.map((group) => group.id === groupId ? { ...group, videoIds: group.videoIds.includes(video.id) ? group.videoIds : [...group.videoIds, video.id] } : group)
-    : [...value.groups, { id: groupId, name: "GTV 5 face", description: "Face recording overlay video.", videoIds: [video.id], createdAt: now() }];
+    ? normalizedValue.groups.map((group) => group.id === groupId ? { ...group, videoIds: group.videoIds.includes(video.id) ? group.videoIds : [...group.videoIds, video.id] } : group)
+    : [...normalizedValue.groups, { id: groupId, name: "GTV 5 face", description: "Face recording overlay video.", videoIds: [video.id], createdAt: now() }];
   const videos = existingVideo
-    ? value.videos.map((item) => item.id === video.id ? { ...item, groupId, sourceUrl: item.sourceUrl || gtv5FaceVideoUrl } : item)
-    : [...value.videos, video];
-  const alreadyAnnounced = value.activities.some((activity) => activity.message.toLowerCase().includes("gtv 5 face video"));
-  return { ...value, groups, videos, activities: alreadyAnnounced ? value.activities : [{ id: uid("act"), type: "video", message: "GTV 5 face video is ready", time: "Just now" }, ...value.activities].slice(0, 8) };
+    ? normalizedValue.videos.map((item) => item.id === video.id ? { ...item, groupId, sourceUrl: item.sourceUrl || gtv5FaceVideoUrl, serverSource: item.serverSource || "__asset:gtv5face" } : item)
+    : [...normalizedValue.videos, video];
+  const alreadyAnnounced = normalizedValue.activities.some((activity) => activity.message.toLowerCase().includes("gtv 5 face video"));
+  return { ...normalizedValue, groups, videos, activities: alreadyAnnounced ? normalizedValue.activities : [{ id: uid("act"), type: "video", message: "GTV 5 face video is ready", time: "Just now" }, ...normalizedValue.activities].slice(0, 8) };
 }
 
 function useWorkspace() {
@@ -227,10 +234,12 @@ function ChannelModal({ channel, groups, videos, onSave, onClose }: {channel?:Li
   const set=(key:string,value:string|number|boolean)=>setForm(f=>({...f,[key]:value}));
   const selectedGroup = groups.find(g=>g.id===form.groupId);
   const faceGroup = groups.find(g=>g.id===form.faceGroupId);
-  const mainVideo = videos.find(v=>v.id===selectedGroup?.videoIds[0]);
-  const faceVideo = videos.find(v=>v.id===faceGroup?.videoIds[0]);
-  const mainServerReady = selectedGroup?.name.toLowerCase() === "gta" || Boolean(mainVideo?.serverSource);
-  const faceServerReady = !form.faceGroupId || faceGroup?.name.toLowerCase() === "gta" || Boolean(faceVideo?.serverSource);
+  const mainVideos = selectedGroup?.videoIds.map(id=>videos.find(v=>v.id===id)).filter((video): video is VideoItem=>Boolean(video)) || [];
+  const faceVideos = faceGroup?.videoIds.map(id=>videos.find(v=>v.id===id)).filter((video): video is VideoItem=>Boolean(video)) || [];
+  const mainVideo = mainVideos[0];
+  const faceVideo = faceVideos[0];
+  const mainServerReady = mainVideos.length > 0 && mainVideos.every(video=>Boolean(video.serverSource));
+  const faceServerReady = !form.faceGroupId || (faceVideos.length > 0 && faceVideos.every(video=>Boolean(video.serverSource)));
   const submit=(e:FormEvent)=>{
     e.preventDefault();
     if(!form.streamUrl.trim() || !form.groupId) return;
@@ -258,7 +267,7 @@ function ChannelModal({ channel, groups, videos, onSave, onClose }: {channel?:Li
     </div>
     <ChannelPreview mainUrl={mainVideo?.sourceUrl} faceUrl={faceVideo?.sourceUrl} ratio={form.aspectRatio} facePosition={form.facePosition} faceSize={Number(form.faceSize)} />
     {(!mainServerReady || !faceServerReady) && <div className="error-note stream-source-warning"><ShieldCheck size={14} style={{verticalAlign:"-3px",marginRight:6}}/>Preview is ready, but Start needs this category to be server-ready. Re-add the video from Video library once so the local stream server can use it.</div>}
-    <div className="form-note"><ShieldCheck size={14} style={{verticalAlign:"-3px",marginRight:6}}/>The selected category video loops continuously. Face placement and size are shown in the preview. Browser-added videos are available for preview here; server streaming currently requires a server-side source.</div>
+     <div className="form-note"><ShieldCheck size={14} style={{verticalAlign:"-3px",marginRight:6}}/>Videos in the selected category play in their saved order and loop back to the first after the last. Face placement and size are shown in the preview. Browser-added videos are available for preview here; server streaming currently requires a server-side source.</div>
   </form></Modal>;
 }
 
@@ -271,11 +280,20 @@ function LivePage({workspace}:{workspace:ReturnType<typeof useWorkspace>}) {
     const category=data.groups.find(g=>g.id===c.groupId)?.name;
     const faceCategory=c.faceGroupId?data.groups.find(g=>g.id===c.faceGroupId)?.name:undefined;
     if(!category)throw new Error("Choose a video category before starting.");
-    const mainVideo=data.videos.find(v=>v.groupId===c.groupId);
-    const faceVideo=c.faceGroupId?data.videos.find(v=>v.groupId===c.faceGroupId):undefined;
+     const mainGroup=data.groups.find(g=>g.id===c.groupId);
+     const faceGroup=c.faceGroupId?data.groups.find(g=>g.id===c.faceGroupId):undefined;
+     const mainVideos=(mainGroup?.videoIds||[]).map(id=>data.videos.find(v=>v.id===id)).filter((video): video is VideoItem=>Boolean(video));
+     const faceVideos=(faceGroup?.videoIds||[]).map(id=>data.videos.find(v=>v.id===id)).filter((video): video is VideoItem=>Boolean(video));
+     const mainVideo=mainVideos[0];
+     const faceVideo=faceVideos[0];
+     if(!mainVideos.length)throw new Error("Choose a category with at least one video before starting.");
+     if(!mainVideos.every(video=>video.serverSource))throw new Error("Every video in the selected category must be server-ready before starting.");
+     if(faceVideos.length&&!faceVideos.every(video=>video.serverSource))throw new Error("Every video in the face category must be server-ready before starting.");
     const result=await startStream({
-      streamId:c.id, ingestUrl:c.streamUrl, category, videoSource:mainVideo?.serverSource,
-      faceCategory, faceSource:faceVideo?.serverSource,
+       streamId:c.id, ingestUrl:c.streamUrl, category, videoSource:mainVideo?.serverSource,
+       videoSources:mainVideos.map(video=>video.serverSource).filter((source): source is string=>Boolean(source)),
+       faceCategory, faceSource:faceVideo?.serverSource,
+       faceSources:faceVideos.map(video=>video.serverSource).filter((source): source is string=>Boolean(source)),
       aspectRatio:c.aspectRatio||"full", facePosition:c.facePosition||"bottom-right",
       faceScale:(c.faceSize||25)/100, durationMinutes:(c.durationHours||1)*60,
       autoRestart:Boolean(c.autoRestart),
@@ -312,7 +330,7 @@ function VideoModal({video,groups,defaultGroupId="",onSave,onClose}:{video?:Vide
     }
     onSave({id:video?.id||uid("vid"),title:form.title.trim(),duration:form.duration||"00:00",status:form.status as VideoStatus,groupId:form.groupId,sourceUrl,serverSource,thumbnailColor:form.thumbnailColor,views:video?.views||0,createdAt:video?.createdAt||now()});
   };
-  return <Modal title="Add video" onClose={onClose} footer={<><button className="button ghost" onClick={onClose} disabled={uploading} data-testid="button-cancel-video">Cancel</button><button className="button" type="submit" form="video-form" disabled={uploading} data-testid="button-save-video">{uploading ? "Uploading…" : "Add video"} {!uploading&&<Check size={14}/>}</button></>}><form id="video-form" onSubmit={submit}><div className="form-grid"><div className="field full"><label>Choose video file</label><input autoFocus required={!form.sourceUrl} type="file" accept="video/*" onChange={e=>{const next=e.target.files?.[0];if(!next)return;setFile(next);setFileName(next.name);setForm(f=>({...f,title:f.title||next.name.replace(/\.[^.]+$/,""),sourceUrl:URL.createObjectURL(next)}))}} data-testid="input-video-file"/>{fileName&&<span className="file-picked"><Check size={13}/> {fileName} · server-ready upload</span>}{uploadError&&<div className="error-note">{uploadError}</div>}</div><div className="field full"><label>Video title</label><input required value={form.title} onChange={e=>set("title",e.target.value)} placeholder="Title for this video" data-testid="input-video-title"/></div><div className="field"><label>Video category</label><select required value={form.groupId} onChange={e=>set("groupId",e.target.value)} data-testid="select-video-group"><option value="">Select a category</option>{groups.map(g=><option value={g.id} key={g.id}>{g.name}</option>)}</select></div><div className="field"><label>Duration</label><input value={form.duration} onChange={e=>set("duration",e.target.value)} placeholder="24:18" data-testid="input-video-duration"/></div></div><div className="form-note"><Upload size={14} style={{verticalAlign:"-3px",marginRight:6}}/>The video is previewed immediately in this browser and uploaded to the local stream server so FFmpeg can use it in a real loop or face overlay.</div></form></Modal>;
+  return <Modal title={video?"Edit video":"Add video"} onClose={onClose} footer={<><button className="button ghost" onClick={onClose} disabled={uploading} data-testid="button-cancel-video">Cancel</button><button className="button" type="submit" form="video-form" disabled={uploading} data-testid="button-save-video">{uploading ? "Uploading…" : video ? "Save changes" : "Add video"} {!uploading&&<Check size={14}/>}</button></>}><form id="video-form" onSubmit={submit}><div className="form-grid"><div className="field full"><label>{video?"Replace video file (optional)":"Choose video file"}</label><input autoFocus required={!form.sourceUrl} type="file" accept="video/*" onChange={e=>{const next=e.target.files?.[0];if(!next)return;setFile(next);setFileName(next.name);setForm(f=>({...f,title:f.title||next.name.replace(/\.[^.]+$/,""),sourceUrl:URL.createObjectURL(next)}))}} data-testid="input-video-file"/>{fileName&&<span className="file-picked"><Check size={13}/> {fileName} · server-ready upload</span>}{uploadError&&<div className="error-note">{uploadError}</div>}</div><div className="field full"><label>Video title</label><input required value={form.title} onChange={e=>set("title",e.target.value)} placeholder="Title for this video" data-testid="input-video-title"/></div><div className="field"><label>Video category</label><select required value={form.groupId} onChange={e=>set("groupId",e.target.value)} data-testid="select-video-group"><option value="">Select a category</option>{groups.map(g=><option value={g.id} key={g.id}>{g.name}</option>)}</select></div><div className="field"><label>Duration</label><input value={form.duration} onChange={e=>set("duration",e.target.value)} placeholder="24:18" data-testid="input-video-duration"/></div></div><div className="form-note"><Upload size={14} style={{verticalAlign:"-3px",marginRight:6}}/>Videos in a category play in their saved order and loop back to the first video after the last one.</div></form></Modal>;
 }
 
 function YoutubeDownloadModal({groups,defaultGroupId="",onSave,onClose}:{groups:VideoGroup[];defaultGroupId?:string;onSave:(v:VideoItem)=>void;onClose:()=>void}) {
@@ -340,16 +358,17 @@ function VideosPage({workspace}:{workspace:ReturnType<typeof useWorkspace>}) {
   const [search,setSearch]=useState(""); const [status,setStatus]=useState("all"); const [group,setGroup]=useState("all");
   const [tab,setTab]=useState<"library"|"groups">("groups"); const [videoModal,setVideoModal]=useState(false); const [youtubeModal,setYoutubeModal]=useState(false);
   const [videoGroupId,setVideoGroupId]=useState(""); const [groupModal,setGroupModal]=useState(false);
-  const [editingGroup,setEditingGroup]=useState<VideoGroup|undefined>(); const [deleting,setDeleting]=useState<{kind:"video"|"group";id:string;name:string}|undefined>();
+  const [editingGroup,setEditingGroup]=useState<VideoGroup|undefined>(); const [editingVideo,setEditingVideo]=useState<VideoItem|undefined>(); const [deleting,setDeleting]=useState<{kind:"video"|"group";id:string;name:string}|undefined>();
   const filtered=useMemo(()=>data.videos.filter(v=>(!search||v.title.toLowerCase().includes(search.toLowerCase()))&&(status==="all"||v.status===status)&&(group==="all"||v.groupId===group)),[data.videos,search,status,group]);
   const openAddVideo=(groupId="")=>{setVideoGroupId(groupId);setVideoModal(true);};
   const openGroup=(groupId:string)=>{setGroup(groupId);setTab("library");};
-  const saveVideo=(v:VideoItem)=>{const exists=data.videos.some(x=>x.id===v.id);let groups=data.groups.map(g=>({...g,videoIds:g.videoIds.filter(id=>id!==v.id)}));if(v.groupId)groups=groups.map(g=>g.id===v.groupId?{...g,videoIds:[...g.videoIds,v.id]}:g);update({videos:exists?data.videos.map(x=>x.id===v.id?v:x):[v,...data.videos],groups},{message:`${v.title} was added to the library`,type:"video"});setVideoModal(false);setVideoGroupId("");};
+  const saveVideo=(v:VideoItem)=>{const existing=data.videos.find(x=>x.id===v.id);const moved=existing&&existing.groupId!==v.groupId;let groups=data.groups;if(!existing||moved){groups=data.groups.map(g=>({...g,videoIds:g.videoIds.filter(id=>id!==v.id)}));if(v.groupId)groups=groups.map(g=>g.id===v.groupId?{...g,videoIds:[...g.videoIds,v.id]}:g);}update({videos:existing?data.videos.map(x=>x.id===v.id?v:x):[v,...data.videos],groups},{message:existing?`${v.title} was updated`:`${v.title} was added to the library`,type:"video"});setVideoModal(false);setVideoGroupId("");setEditingVideo(undefined);};
+  const openEditVideo=(video:VideoItem)=>{setEditingVideo(video);setVideoGroupId(video.groupId);setVideoModal(true);};
   const saveGroup=(g:VideoGroup)=>{const exists=data.groups.some(x=>x.id===g.id);update({groups:exists?data.groups.map(x=>x.id===g.id?g:x):[...data.groups,g]},{message:exists?`${g.name} was updated`:`${g.name} was created`,type:"group"});setGroupModal(false);setEditingGroup(undefined);};
   const remove=()=>{if(!deleting)return;if(deleting.kind==="video")update({videos:data.videos.filter(v=>v.id!==deleting.id),groups:data.groups.map(g=>({...g,videoIds:g.videoIds.filter(id=>id!==deleting.id)}))},{message:`${deleting.name} was deleted`,type:"video"});else update({groups:data.groups.filter(g=>g.id!==deleting.id),videos:data.videos.map(v=>v.groupId===deleting.id?{...v,groupId:""}:v)},{message:`${deleting.name} was deleted`,type:"group"});setDeleting(undefined);};
-   const library=<div className="card section-card"><div className="section-head"><div><h2 className="section-title">{filtered.length} video{filtered.length===1?"":"s"}</h2><p className="subtle" style={{margin:"5px 0 0",fontSize:11}}>{search||status!=="all"||group!=="all"?"Filtered library":"Your local media index"}</p></div><div className="table-sub">{fmtNumber(data.videos.reduce((a,v)=>a+v.views,0))} total views</div></div>{filtered.length===0?<EmptyState icon={<Search size={21}/>} title="No videos found" copy="Try a different search, or add a new piece to your library." action="Add video" onClick={()=>openAddVideo(group!=="all"?group:"")}/>:<div className="table-wrap"><table className="data-table"><thead><tr><th>Video</th><th>Status</th><th>Category</th><th>Views</th><th>Source</th><th/></tr></thead><tbody>{filtered.map(v=><tr key={v.id} data-testid={`row-video-${v.id}`}><td><div style={{display:"flex",alignItems:"center",gap:10}}><div className="thumb" style={{background:v.thumbnailColor,width:52,height:34}}><Video size={14}/><span style={{fontSize:9,marginLeft:-3}}>{v.duration}</span></div><div><div className="table-title">{v.title}</div><div className="table-sub">Added {new Date(v.createdAt).toLocaleDateString()}</div></div></div></td><td><span className={`status ${v.status==="published"?"live":v.status==="draft"?"scheduled":"stopped"}`}><span className="status-dot"/>{v.status}</span></td><td><span className="table-sub">{data.groups.find(g=>g.id===v.groupId)?.name||"Unassigned"}</span></td><td><span className="mono">{fmtNumber(v.views)}</span></td><td>{v.sourceUrl?<a href={v.sourceUrl} target="_blank" rel="noreferrer" className="section-link" data-testid={`link-source-${v.id}`}><Link2 size={12} style={{verticalAlign:"-2px"}}/> {v.serverSource?"Server-ready":"Preview only"}</a>:<span className="table-sub">Not attached</span>}</td><td><div className="actions"><button className="icon-button" style={{width:30,height:30}} onClick={()=>setDeleting({kind:"video",id:v.id,name:v.title})} title="Delete video" data-testid={`button-delete-video-${v.id}`}><Trash2 size={13}/></button></div></td></tr>)}</tbody></table></div>}</div>;
+  const library=<div className="card section-card"><div className="section-head"><div><h2 className="section-title">{filtered.length} video{filtered.length===1?"":"s"}</h2><p className="subtle" style={{margin:"5px 0 0",fontSize:11}}>{search||status!=="all"||group!=="all"?"Filtered library":"Your local media index"}</p></div><div className="table-sub">{fmtNumber(data.videos.reduce((a,v)=>a+v.views,0))} total views</div></div>{filtered.length===0?<EmptyState icon={<Search size={21}/>} title="No videos found" copy="Try a different search, or add a new piece to your library." action="Add video" onClick={()=>openAddVideo(group!=="all"?group:"")}/>:<div className="table-wrap"><table className="data-table"><thead><tr><th>Video</th><th>Status</th><th>Category</th><th>Views</th><th>Source</th><th/></tr></thead><tbody>{filtered.map(v=><tr key={v.id} data-testid={`row-video-${v.id}`}><td><div style={{display:"flex",alignItems:"center",gap:10}}><div className="thumb" style={{background:v.thumbnailColor,width:52,height:34}}><Video size={14}/><span style={{fontSize:9,marginLeft:-3}}>{v.duration}</span></div><div><div className="table-title">{v.title}</div><div className="table-sub">Added {new Date(v.createdAt).toLocaleDateString()}</div></div></div></td><td><span className={`status ${v.status==="published"?"live":v.status==="draft"?"scheduled":"stopped"}`}><span className="status-dot"/>{v.status}</span></td><td><span className="table-sub">{data.groups.find(g=>g.id===v.groupId)?.name||"Unassigned"}</span></td><td><span className="mono">{fmtNumber(v.views)}</span></td><td>{v.sourceUrl?<a href={v.sourceUrl} target="_blank" rel="noreferrer" className="section-link" data-testid={`link-source-${v.id}`}><Link2 size={12} style={{verticalAlign:"-2px"}}/> {v.serverSource?"Server-ready":"Preview only"}</a>:<span className="table-sub">Not attached</span>}</td><td><div className="actions"><button className="icon-button" style={{width:30,height:30}} onClick={()=>openEditVideo(v)} title="Edit video" data-testid={`button-edit-video-${v.id}`}><Pencil size={13}/></button><button className="icon-button" style={{width:30,height:30}} onClick={()=>setDeleting({kind:"video",id:v.id,name:v.title})} title="Delete video" data-testid={`button-delete-video-${v.id}`}><Trash2 size={13}/></button></div></td></tr>)}</tbody></table></div>}</div>;
   const groups=<div>{data.groups.length===0?<div className="card"><EmptyState icon={<FolderOpen size={21}/>} title="No categories yet" copy="Create a category to organize videos into a series or collection." action="Create category" onClick={()=>setGroupModal(true)}/></div>:<div className="group-grid">{data.groups.map(g=><div className="card group-card" key={g.id} data-testid={`card-group-${g.id}`}><button className="group-open" onClick={()=>openGroup(g.id)} data-testid={`button-open-group-${g.id}`}><h3>{g.name}</h3><p>{g.description||"No description yet."}</p><span className="group-open-label">Open category <ArrowRight size={12}/></span></button><div className="group-foot"><span>{g.videoIds.length} video{g.videoIds.length===1?"":"s"}</span><button onClick={()=>setDeleting({kind:"group",id:g.id,name:g.name})} className="section-link" style={{color:"#a05b45"}} data-testid={`button-delete-group-${g.id}`}>Delete</button></div></div>)}</div>}</div>;
-  return <AppShell title="Video library" workspace={workspace}><div className="page"><div className="page-head"><div><p className="eyebrow">Archive & distribution</p><h1>Video library</h1><p className="subtle">Start with a category, then open it to manage the videos inside.</p></div><div style={{display:"flex",gap:8,flexWrap:"wrap",justifyContent:"flex-end"}}>{tab==="groups"&&<button className="button secondary" onClick={()=>setGroupModal(true)} data-testid="button-add-group"><Plus size={15}/> New category</button>}<button className="button secondary" onClick={()=>setYoutubeModal(true)} data-testid="button-youtube-downloader"><Download size={15}/> YouTube downloader</button><button className="button" onClick={()=>openAddVideo(group!=="all"?group:"")} data-testid="button-add-video"><Plus size={15}/> Add video</button></div></div><div className="toolbar"><div className="filter-row"><button className={`button small ${tab==="library"?"":"ghost"}`} onClick={()=>setTab("library")} data-testid="button-tab-library"><FileVideo size={13}/> Videos</button><button className={`button small ${tab==="groups"?"":"ghost"}`} onClick={()=>setTab("groups")} data-testid="button-tab-groups"><FolderOpen size={13}/> Categories</button></div>{tab==="library"&&<div className="filter-row"><div className="input-wrap"><Search size={14} color="#899791"/><input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search videos…" data-testid="input-search-videos"/></div><select value={status} onChange={e=>setStatus(e.target.value)} data-testid="select-filter-status"><option value="all">All statuses</option><option value="published">Published</option><option value="draft">Draft</option><option value="archived">Archived</option></select><select value={group} onChange={e=>setGroup(e.target.value)} data-testid="select-filter-group"><option value="all">All categories</option>{data.groups.map(g=><option value={g.id} key={g.id}>{g.name}</option>)}</select></div>}</div>{tab==="library"?library:groups}</div>{videoModal&&<VideoModal groups={data.groups} defaultGroupId={videoGroupId} onSave={saveVideo} onClose={()=>{setVideoModal(false);setVideoGroupId("")}}/>}{youtubeModal&&<YoutubeDownloadModal groups={data.groups} defaultGroupId={group!=="all"?group:""} onSave={(video)=>{saveVideo(video);setYoutubeModal(false)}} onClose={()=>setYoutubeModal(false)}/>} {groupModal&&<GroupModal group={editingGroup} onSave={saveGroup} onClose={()=>{setGroupModal(false);setEditingGroup(undefined)}}/>}{deleting&&<ConfirmModal title={`Delete this ${deleting.kind}?`} copy={`“${deleting.name}” will be removed from the ${deleting.kind==="video"?"library":"workspace"}. ${deleting.kind==="group"?"Videos inside it will remain in your library.":""}`} onClose={()=>setDeleting(undefined)} onConfirm={remove}/>}</AppShell>;
+  return <AppShell title="Video library" workspace={workspace}><div className="page"><div className="page-head"><div><p className="eyebrow">Archive & distribution</p><h1>Video library</h1><p className="subtle">Start with a category, then open it to manage the videos inside.</p></div><div style={{display:"flex",gap:8,flexWrap:"wrap",justifyContent:"flex-end"}}>{tab==="groups"&&<button className="button secondary" onClick={()=>setGroupModal(true)} data-testid="button-add-group"><Plus size={15}/> New category</button>}<button className="button secondary" onClick={()=>setYoutubeModal(true)} data-testid="button-youtube-downloader"><Download size={15}/> YouTube downloader</button><button className="button" onClick={()=>openAddVideo(group!=="all"?group:"")} data-testid="button-add-video"><Plus size={15}/> Add video</button></div></div><div className="toolbar"><div className="filter-row"><button className={`button small ${tab==="library"?"":"ghost"}`} onClick={()=>setTab("library")} data-testid="button-tab-library"><FileVideo size={13}/> Videos</button><button className={`button small ${tab==="groups"?"":"ghost"}`} onClick={()=>setTab("groups")} data-testid="button-tab-groups"><FolderOpen size={13}/> Categories</button></div>{tab==="library"&&<div className="filter-row"><div className="input-wrap"><Search size={14} color="#899791"/><input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search videos…" data-testid="input-search-videos"/></div><select value={status} onChange={e=>setStatus(e.target.value)} data-testid="select-filter-status"><option value="all">All statuses</option><option value="published">Published</option><option value="draft">Draft</option><option value="archived">Archived</option></select><select value={group} onChange={e=>setGroup(e.target.value)} data-testid="select-filter-group"><option value="all">All categories</option>{data.groups.map(g=><option value={g.id} key={g.id}>{g.name}</option>)}</select></div>}</div>{tab==="library"?library:groups}</div>{videoModal&&<VideoModal video={editingVideo} groups={data.groups} defaultGroupId={videoGroupId} onSave={saveVideo} onClose={()=>{setVideoModal(false);setVideoGroupId("");setEditingVideo(undefined)}}/>}{youtubeModal&&<YoutubeDownloadModal groups={data.groups} defaultGroupId={group!=="all"?group:""} onSave={(video)=>{saveVideo(video);setYoutubeModal(false)}} onClose={()=>setYoutubeModal(false)}/>} {groupModal&&<GroupModal group={editingGroup} onSave={saveGroup} onClose={()=>{setGroupModal(false);setEditingGroup(undefined)}}/>}{deleting&&<ConfirmModal title={`Delete this ${deleting.kind}?`} copy={`“${deleting.name}” will be removed from the ${deleting.kind==="video"?"library":"workspace"}. ${deleting.kind==="group"?"Videos inside it will remain in your library.":""}`} onClose={()=>setDeleting(undefined)} onConfirm={remove}/>}</AppShell>;
 }
 
 function SettingsPage({workspace}:{workspace:ReturnType<typeof useWorkspace>}) {

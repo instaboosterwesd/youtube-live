@@ -1,5 +1,6 @@
 import { spawn, type ChildProcess } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, unlinkSync, writeFileSync } from "node:fs";
+import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { logger } from "./logger";
 
@@ -10,8 +11,10 @@ export type StreamRunnerInput = {
   ingestUrl: string;
   category: string;
   videoSource?: string;
+  videoSources?: string[];
   faceCategory?: string;
   faceSource?: string;
+  faceSources?: string[];
   aspectRatio?: "shorts" | "full" | "square";
   facePosition?: "top-left" | "top-right" | "bottom-left" | "bottom-right" | "center";
   faceScale?: number;
@@ -33,6 +36,7 @@ type StreamProcess = {
   input: StreamRunnerInput;
   durationTimer?: NodeJS.Timeout;
   restartTimer?: NodeJS.Timeout;
+  playlistPaths?: string[];
 };
 
 const assetNamesByCategory: Record<string, string> = {
@@ -56,7 +60,9 @@ function getVideoPath(category: string, explicitSource?: string): string {
     return explicitSource;
   }
 
-  const categoryKey = category.trim().toLowerCase();
+  const categoryKey = explicitSource?.startsWith("__asset:")
+    ? explicitSource.slice("__asset:".length).trim().toLowerCase()
+    : category.trim().toLowerCase();
   const assetName = assetNamesByCategory[categoryKey];
   if (!assetName) {
     throw new Error(
@@ -69,6 +75,29 @@ function getVideoPath(category: string, explicitSource?: string): string {
     throw new Error(`The ${category} video file is not available on the server.`);
   }
   return videoPath;
+}
+
+function getVideoPaths(category: string, explicitSources?: string[], explicitSource?: string): string[] {
+  const sources = explicitSources?.length ? explicitSources : explicitSource ? [explicitSource] : [];
+  return sources.length
+    ? sources.map((source) => getVideoPath(category, source))
+    : [getVideoPath(category)];
+}
+
+function escapePlaylistPath(filePath: string): string {
+  return filePath.replace(/'/g, "'\\''");
+}
+
+function prepareInput(paths: string[]): { path: string; playlistPath?: string } {
+  if (paths.length === 1) return { path: paths[0] };
+  const playlistPath = path.resolve(process.cwd(), `.signal-desk-playlist-${randomUUID()}.txt`);
+  writeFileSync(playlistPath, `${paths.map((filePath) => `file '${escapePlaylistPath(filePath)}'`).join("\n")}\n`);
+  return { path: playlistPath, playlistPath };
+}
+
+function cleanupPlaylists(process: StreamProcess): void {
+  process.playlistPaths?.forEach((playlistPath) => unlinkSync(playlistPath));
+  process.playlistPaths = undefined;
 }
 
 function validateIngestUrl(rawUrl: string): URL {
@@ -91,7 +120,11 @@ function setFile(url: URL, filename: string): string {
   return copy.toString();
 }
 
-function buildFfmpegArgs(input: StreamRunnerInput, videoPath: string, facePath?: string): string[] {
+function buildFfmpegArgs(
+  input: StreamRunnerInput,
+  videoInput: { path: string; playlistPath?: string },
+  faceInput?: { path: string; playlistPath?: string },
+): string[] {
   const ingestUrl = validateIngestUrl(input.ingestUrl);
   const aspectRatio = input.aspectRatio ?? "full";
   const dimensions = {
@@ -100,6 +133,7 @@ function buildFfmpegArgs(input: StreamRunnerInput, videoPath: string, facePath?:
     square: [1080, 1080],
   }[aspectRatio];
   const [width, height] = dimensions;
+  const facePath = faceInput?.path;
   const needsVideoFilter = aspectRatio !== "full" || Boolean(facePath);
 
   const inputArgs = [
@@ -109,12 +143,20 @@ function buildFfmpegArgs(input: StreamRunnerInput, videoPath: string, facePath?:
     "-re",
     "-stream_loop",
     "-1",
+    ...(videoInput.playlistPath ? ["-f", "concat", "-safe", "0"] : []),
     "-i",
-    videoPath,
+    videoInput.path,
   ];
 
-  if (facePath) {
-    inputArgs.push("-re", "-stream_loop", "-1", "-i", facePath);
+  if (faceInput) {
+    inputArgs.push(
+      "-re",
+      "-stream_loop",
+      "-1",
+      ...(faceInput.playlistPath ? ["-f", "concat", "-safe", "0"] : []),
+      "-i",
+      faceInput.path,
+    );
   }
 
   const videoArgs = needsVideoFilter
@@ -202,11 +244,15 @@ function resultFor(streamId: string, process: StreamProcess, message: string): S
 }
 
 function launchProcess(process: StreamProcess): void {
-  const videoPath = getVideoPath(process.input.category, process.input.videoSource);
-  const facePath = process.input.faceCategory
-    ? getVideoPath(process.input.faceCategory, process.input.faceSource)
-    : undefined;
-  const child = spawn("ffmpeg", buildFfmpegArgs(process.input, videoPath, facePath), {
+  cleanupPlaylists(process);
+  const videoPaths = getVideoPaths(process.input.category, process.input.videoSources, process.input.videoSource);
+  const facePaths = process.input.faceCategory
+    ? getVideoPaths(process.input.faceCategory, process.input.faceSources, process.input.faceSource)
+    : [];
+  const videoInput = prepareInput(videoPaths);
+  const faceInput = facePaths.length ? prepareInput(facePaths) : undefined;
+  process.playlistPaths = [videoInput.playlistPath, faceInput?.playlistPath].filter((playlistPath): playlistPath is string => Boolean(playlistPath));
+  const child = spawn("ffmpeg", buildFfmpegArgs(process.input, videoInput, faceInput), {
     stdio: ["ignore", "ignore", "pipe"],
   });
 
@@ -226,6 +272,7 @@ function launchProcess(process: StreamProcess): void {
     logger.error({ streamId: process.input.streamId, error: error.message }, "FFmpeg process error");
   });
   child.once("exit", (code, signal) => {
+    cleanupPlaylists(process);
     if (process.durationTimer) {
       clearTimeout(process.durationTimer);
       process.durationTimer = undefined;
@@ -263,8 +310,8 @@ export function startStream(input: StreamRunnerInput): StreamRunnerResult {
     throw new Error("This channel is already streaming.");
   }
 
-  getVideoPath(input.category, input.videoSource);
-  if (input.faceCategory) getVideoPath(input.faceCategory, input.faceSource);
+  getVideoPaths(input.category, input.videoSources, input.videoSource);
+  if (input.faceCategory) getVideoPaths(input.faceCategory, input.faceSources, input.faceSource);
 
   const streamProcess: StreamProcess = {
     child: null,

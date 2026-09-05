@@ -1,0 +1,44 @@
+and dekho mene video add kar diy ha ok name ha vo edit kar ske ok ankdheo jaise mein live start kiya to koi fodler lslect karekek to esa usme 2 vidoe ha to pahle ek clet katm ho to dusri fir dusrui khatam ho to 1st fir se clae ok new add kar di to 1 2 3 fir 1 2 3 loop mein ok kaor ok
+
+MA
+majegos807
+majegos807
+Free
+41 minutes ago
+समझ गया। मैं दो बदलाव कर रहा हूँ:
+
+Video library में हर video का Edit button, ताकि उसका नाम/category बदल सकें।
+Live start पर चुनी हुई category के सारे videos क्रम से चलेंगे — 1 → 2 → 3 → 1...; category में नया video जोड़ने पर अगली start में वही नया क्रम शामिल होगा।
+पहले current stream input और video row flow देख रहा हूँ, फिर API और FFmpeg playlist behavior बदलूँगा।
+
+
+
+6 actions
+अब क्रम वाली playlist support जोड़ रहा हूँ। Category के videos की saved order ही playback order होगी, और edit करते समय सिर्फ नाम बदलने पर order नहीं बदलेगा। साथ में built-in GTA/GTV sources को भी server-ready token से preserve करूँगा।
+
+
+
+Edited openapi.yaml
+Playlist API field add हो गया है, लेकिन frontend patch एक बड़े block में apply नहीं हुआ; code सुरक्षित है, अब छोटे targeted edits में जोड़ रहा हूँ। पहले exact sections पकड़कर क्रम से लागू करूँगा।
+
+
+
+29 actions
+Edit button और playlist payload frontend में जुड़ गए हैं। अब API types regenerate करके compile errors पकड़ूँगा, फिर FFmpeg playlist को local videos के साथ test करूँगा।
+
+
+
+5 actions
+एक छोटा backend compile issue मिला: face input path की declaration filter calculation के बाद थी। उसे ऊपर करके fix कर रहा हूँ, फिर full typecheck और FFmpeg playlist smoke test चलाऊँगा।
+
+
+
+6 actions
+
+Worked for 5 minutes
+You've reached your daily free quota limit. It will reset at 12:00 AM UTC.
+
+and dekho mene video add kar diy ha ok name ha vo edit kar ske ok ankdheo jaise mein live start kiya to koi fodler lslect karekek to esa usme 2 vidoe ha to pahle ek clet katm ho to dusri fir dusrui khatam ho to 1st fir se clae ok new add kar di to 1 2 3 fir 1 2 3 loop mein ok kaor ok Agent activity समझ गया। मैं दो बदलाव कर रहा हूँ: 1. Video library में हर video का **Edit** button, ताकि उसका नाम/category बदल सकें। 2. Live start पर चुनी हुई category के सारे videos क्रम से चलेंगे — `1 → 2 → 3 → 1...`; category में नया video जोड़ने पर अगली start में वही नया क्रम शामिल होगा। पहले current stream input और video row flow देख रहा हूँ, फिर API और FFmpeg playlist behavior बदलूँगा। Agent activity Agent activity अब क्रम वाली playlist support जोड़ रहा हूँ। Category के videos की saved order ही playback order होगी, और edit करते समय सिर्फ नाम बदलने पर order नहीं बदलेगा। साथ में built-in GTA/GTV sources को भी server-ready token से preserve करूँगा। Agent activity Playlist API field add हो गया है, लेकिन frontend patch एक बड़े block में apply नहीं हुआ; code सुरक्षित है, अब छोटे targeted edits में जोड़ रहा हूँ। पहले exact sections पकड़कर क्रम से लागू करूँगा। Agent activity Agent activity Edit button और playlist payload frontend में जुड़ गए हैं। अब API types regenerate करके compile errors पकड़ूँगा, फिर FFmpeg playlist को local videos के साथ test करूँगा। Agent activity Agent activity एक छोटा backend compile issue मिला: face input path की declaration filter calculation के बाद थी। उसे ऊपर करके fix कर रहा हूँ, फिर full typecheck और FFmpeg playlist smoke test चलाऊँगा। Agent activity Agent activity Agent activity Agent activity
+
+Scroll to latest
+Guests can't use Ag
