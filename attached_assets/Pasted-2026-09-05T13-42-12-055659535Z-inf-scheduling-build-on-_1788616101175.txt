@@ -1,0 +1,53 @@
+2026-09-05T13:42:12.055659535Z [inf]  scheduling build on Metal builder "builder-vtpbkz"
+2026-09-05T13:42:13.173733454Z [inf]  unpacking archive
+2026-09-05T13:42:13.326562030Z [inf]  uploading snapshot
+2026-09-05T13:42:13.399917761Z [inf]  using build driver railpack-v0.39.0
+2026-09-05T13:42:13.661814174Z [inf]  [railway] prepare railpack-v0.39.0
+2026-09-05T13:42:13.661817309Z [inf]  local://prepare-driver
+2026-09-05T13:42:13.661818140Z [inf]  local://prepare-context
+2026-09-05T13:42:13.661819032Z [inf]  docker-image://ghcr.io/railwayapp/railpack-builder:latest
+2026-09-05T13:42:13.662175066Z [inf]  local://prepare-driver
+2026-09-05T13:42:13.662177259Z [inf]  docker-image://ghcr.io/railwayapp/railpack-builder:latest
+2026-09-05T13:42:13.662196328Z [inf]  local://prepare-context
+2026-09-05T13:42:13.662197890Z [inf]  local://prepare-driver
+2026-09-05T13:42:13.662285211Z [inf]  local://prepare-context
+2026-09-05T13:42:13.727520852Z [inf]  docker-image://ghcr.io/railwayapp/railpack-builder:latest
+2026-09-05T13:42:13.738765654Z [inf]  docker-image://ghcr.io/railwayapp/railpack-builder:latest
+2026-09-05T13:42:13.813396559Z [inf]  local://prepare-driver
+2026-09-05T13:42:13.913428811Z [inf]  local://prepare-context
+2026-09-05T13:42:13.941228187Z [inf]  [railway] prepare railpack-v0.39.0
+2026-09-05T13:42:15.644838697Z [inf]                     
+[38;2;125;86;243m╭─────────────────╮[0m
+[38;2;125;86;243m│[0m Railpack 0.39.0 [38;2;125;86;243m│[0m
+[38;2;125;86;243m╰─────────────────╯[0m
+
+  [97m↳ Detected Node[0m
+  [97m↳ Using pnpm package manager[0m
+  [97m↳ Found workspace with 8 packages[0m
+  [1;31m✖ No start command detected. Specify a start command: https://railpack.com/config/file#deploy[0m
+  
+  To configure your start command, Railpack will check:
+  
+  1. A "start" script in your package.json:
+     "scripts": {
+       "start": "node index.js"
+     }
+  
+  2. A "main" field in your package.json pointing to your entry file:
+     "main": "src/server.js"
+  
+  3. An index.js or index.ts file in your project root
+  
+  4. An Nx workspace with a Next.js app (nx.json + next)
+  
+  If you have a static site, you can set the RAILPACK_SPA_OUTPUT_DIR environment variable
+  containing the directory of your built static files.
+  
+  For multi-app Nx workspaces, set RAILPACK_NX_APP to select which app to deploy.
+  
+  For more information, see the Node.js production deployment guide: https://railway.app/docs/deploy/node
+
+
+
+2026-09-05T13:42:15.862513739Z [err]  [railway] prepare railpack-v0.39.0
+2026-09-05T13:42:15.987234266Z [err]  railpack prepare exited with an error
