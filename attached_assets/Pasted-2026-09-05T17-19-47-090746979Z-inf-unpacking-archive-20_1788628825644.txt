@@ -1,0 +1,229 @@
+2026-09-05T17:19:47.090746979Z [inf]  unpacking archive
+2026-09-05T17:19:47.257242584Z [inf]  uploading snapshot
+2026-09-05T17:19:47.326589987Z [inf]  using build driver railpack-v0.39.0
+2026-09-05T17:19:47.571922281Z [inf]  [railway] prepare railpack-v0.39.0
+2026-09-05T17:19:47.571924915Z [inf]  local://prepare-driver
+2026-09-05T17:19:47.571925406Z [inf]  local://prepare-context
+2026-09-05T17:19:47.571929802Z [inf]  docker-image://ghcr.io/railwayapp/railpack-builder:latest
+2026-09-05T17:19:47.572163103Z [inf]  docker-image://ghcr.io/railwayapp/railpack-builder:latest
+2026-09-05T17:19:47.572165687Z [inf]  local://prepare-driver
+2026-09-05T17:19:47.572166528Z [inf]  local://prepare-context
+2026-09-05T17:19:47.572333068Z [inf]  local://prepare-context
+2026-09-05T17:19:47.572460269Z [inf]  local://prepare-driver
+2026-09-05T17:19:47.572633880Z [inf]  local://prepare-context
+2026-09-05T17:19:47.641116064Z [inf]  docker-image://ghcr.io/railwayapp/railpack-builder:latest
+2026-09-05T17:19:47.643429377Z [inf]  docker-image://ghcr.io/railwayapp/railpack-builder:latest
+2026-09-05T17:19:47.729823323Z [inf]  local://prepare-driver
+2026-09-05T17:19:47.791521132Z [inf]  local://prepare-context
+2026-09-05T17:19:47.813607911Z [inf]  [railway] prepare railpack-v0.39.0
+2026-09-05T17:19:49.157910211Z [inf]  scheduling build on Metal builder "builder-tobhlh"
+2026-09-05T17:19:49.512685897Z [inf]                     
+[38;2;125;86;243m╭─────────────────╮[0m
+[38;2;125;86;243m│[0m Railpack 0.39.0 [38;2;125;86;243m│[0m
+[38;2;125;86;243m╰─────────────────╯[0m
+
+  [97m↳ Detected Node[0m
+  [97m↳ Using pnpm package manager[0m
+  [97m↳ Found workspace with 8 packages[0m
+  [97m↳ Custom start command detected, skipping Caddy start[0m
+            
+  [1mPackages[0m  
+  [38;5;238m──────────[0m
+  [95mnode[0m  [38;5;238m│[0m  [96m24.19.0[0m  [38;5;238m│[0m  railpack default (lts)
+  [95mpnpm[0m  [38;5;238m│[0m  [96m9.15.9[0m   [38;5;238m│[0m  pnpm-lock.yaml (9)
+            
+  [1mSteps[0m     
+  [38;5;238m──────────[0m
+  [95m▸ install[0m
+    [38;5;245m$[0m [1mpnpm add -g node-gyp[0m
+    [38;5;245m$[0m [1mpnpm install --frozen-lockfile --prefer-offline[0m
+         
+  [95m▸ build[0m
+    [38;5;245m$[0m [1mpnpm run build[0m
+            
+  [1mDeploy[0m    
+  [38;5;238m──────────[0m
+    [38;5;245m$[0m [1mpnpm run start[0m
+
+
+2026-09-05T17:19:49.818535037Z [inf]  [railway] prepare railpack-v0.39.0
+2026-09-05T17:19:50.118692643Z [inf]  resolve image config for docker-image://ghcr.io/railwayapp/railpack-frontend:v0.39.0
+2026-09-05T17:19:50.175890365Z [inf]  resolve image config for docker-image://ghcr.io/railwayapp/railpack-frontend:v0.39.0
+2026-09-05T17:19:50.175897976Z [inf]  docker-image://ghcr.io/railwayapp/railpack-frontend:v0.39.0@sha256:db24dc37640b6887c3d455b40876ea30f75182964479670cba6e4cde7ffef103
+2026-09-05T17:19:50.176038177Z [inf]  docker-image://ghcr.io/railwayapp/railpack-frontend:v0.39.0@sha256:db24dc37640b6887c3d455b40876ea30f75182964479670cba6e4cde7ffef103
+2026-09-05T17:19:50.205375612Z [inf]  docker-image://ghcr.io/railwayapp/railpack-frontend:v0.39.0@sha256:db24dc37640b6887c3d455b40876ea30f75182964479670cba6e4cde7ffef103
+2026-09-05T17:19:50.205541511Z [inf]  docker-image://ghcr.io/railwayapp/railpack-frontend:v0.39.0@sha256:db24dc37640b6887c3d455b40876ea30f75182964479670cba6e4cde7ffef103
+2026-09-05T17:19:50.383990932Z [inf]  load build definition from ./railpack-plan.json
+2026-09-05T17:19:50.384132265Z [inf]  load build definition from ./railpack-plan.json
+2026-09-05T17:19:50.384703132Z [inf]  load build definition from ./railpack-plan.json
+2026-09-05T17:19:50.475088650Z [inf]  load build definition from ./railpack-plan.json
+2026-09-05T17:19:50.542076581Z [inf]  copy /usr/local/bin/mise
+2026-09-05T17:19:50.542079706Z [inf]  loading .
+2026-09-05T17:19:50.542081238Z [inf]  create mise config
+2026-09-05T17:19:50.542082540Z [inf]  copy / /app
+2026-09-05T17:19:50.542084643Z [inf]  copy / /app
+2026-09-05T17:19:50.542085795Z [inf]  mkdir /etc/mise
+2026-09-05T17:19:50.542086977Z [inf]  [railpack] secrets hash
+2026-09-05T17:19:50.542088279Z [inf]  install apt packages: libatomic1
+2026-09-05T17:19:50.542089470Z [inf]  copy /root/.cache
+2026-09-05T17:19:50.542090522Z [inf]  install mise packages: node, pnpm
+2026-09-05T17:19:50.542092425Z [inf]  pnpm install --frozen-lockfile --prefer-offline
+2026-09-05T17:19:50.542093807Z [inf]  mkdir -p /app/node_modules/.cache
+2026-09-05T17:19:50.542094979Z [inf]  copy /mise/installs
+2026-09-05T17:19:50.542095940Z [inf]  copy /mise/shims
+2026-09-05T17:19:50.542097032Z [inf]  pnpm add -g node-gyp
+2026-09-05T17:19:50.542098103Z [inf]  pnpm run build
+2026-09-05T17:19:50.542099786Z [inf]  docker-image://ghcr.io/railwayapp/railpack-builder:mise-2026.8.16
+2026-09-05T17:19:50.542101248Z [inf]  copy /etc/mise/config.toml
+2026-09-05T17:19:50.542102340Z [inf]  copy /app/node_modules
+2026-09-05T17:19:50.542103492Z [inf]  docker-image://ghcr.io/railwayapp/railpack-runtime:mise-2026.8.16
+2026-09-05T17:19:50.542104573Z [inf]  copy /root/.local/state/mise
+2026-09-05T17:19:50.542132836Z [inf]  [railpack] merge $packages:apt:runtime, $packages:mise, $build, $build
+2026-09-05T17:19:50.542134658Z [inf]  copy /app
+2026-09-05T17:19:50.542352425Z [inf]  docker-image://ghcr.io/railwayapp/railpack-runtime:mise-2026.8.16
+2026-09-05T17:19:50.542459937Z [inf]  docker-image://ghcr.io/railwayapp/railpack-builder:mise-2026.8.16
+2026-09-05T17:19:50.542461409Z [inf]  loading .
+2026-09-05T17:19:50.542467458Z [inf]  loading .
+2026-09-05T17:19:50.542480267Z [inf]  [railpack] secrets hash
+2026-09-05T17:19:50.618526808Z [inf]  docker-image://ghcr.io/railwayapp/railpack-runtime:mise-2026.8.16
+2026-09-05T17:19:50.618827670Z [inf]  docker-image://ghcr.io/railwayapp/railpack-runtime:mise-2026.8.16
+2026-09-05T17:19:50.618905046Z [inf]  install apt packages: libatomic1
+2026-09-05T17:19:50.637673273Z [inf]  docker-image://ghcr.io/railwayapp/railpack-builder:mise-2026.8.16
+2026-09-05T17:19:50.638870401Z [inf]  mkdir /etc/mise
+2026-09-05T17:19:50.638874166Z [inf]  create mise config
+2026-09-05T17:19:50.638875689Z [inf]  loading .
+2026-09-05T17:19:50.638876710Z [inf]  [railpack] secrets hash
+2026-09-05T17:19:50.638892984Z [inf]  install mise packages: node, pnpm
+2026-09-05T17:19:50.848953965Z [inf]  loading .
+2026-09-05T17:19:50.924578663Z [inf]  [railpack] secrets hash
+2026-09-05T17:19:51.060438924Z [inf]  Hit:1 http://deb.debian.org/debian trixie InRelease
+Hit:2 http://deb.debian.org/debian trixie-updates InRelease
+Hit:3 http://deb.debian.org/debian-security trixie-security InRelease
+
+2026-09-05T17:19:51.092745677Z [inf]  Reading package lists...
+2026-09-05T17:19:51.096955598Z [inf]  mise node@24.19.0    [1/3] install
+
+2026-09-05T17:19:51.098125654Z [inf]  mise node@24.19.0    [1/3] download node-v24.19.0-linux-x64.tar.gz
+
+2026-09-05T17:19:51.098485905Z [inf]  mise pnpm@9.15.9     [1/2] install
+
+2026-09-05T17:19:51.473453254Z [inf]  mise node@24.19.0    [2/3] generate checksum node-v24.19.0-linux-x64.tar.gz
+
+2026-09-05T17:19:51.512363191Z [inf]  mise node@24.19.0    [3/3] extract node-v24.19.0-linux-x64.tar.gz
+
+2026-09-05T17:19:51.675086863Z [inf]  
+2026-09-05T17:19:51.7044127Z [inf]  Reading package lists...
+2026-09-05T17:19:52.07905357Z [inf]  mise pnpm@9.15.9     [1/2] download pnpm-linux-x64
+
+2026-09-05T17:19:52.312129103Z [inf]  
+2026-09-05T17:19:52.324318614Z [inf]  Building dependency tree...
+2026-09-05T17:19:52.503179392Z [inf]  mise node@24.19.0    [3/3] node -v
+
+2026-09-05T17:19:52.50724103Z [inf]  mise node@24.19.0    [3/3] v24.19.0
+
+2026-09-05T17:19:52.508971378Z [inf]  mise node@24.19.0    [3/3] npm -v
+
+2026-09-05T17:19:52.52730307Z [inf]  
+Reading state information...
+
+2026-09-05T17:19:52.565040677Z [inf]  mise pnpm@9.15.9     [1/2] generate checksum pnpm-linux-x64
+
+2026-09-05T17:19:52.608372522Z [inf]  mise pnpm@9.15.9     [1/2] extract pnpm-linux-x64
+
+2026-09-05T17:19:52.64473201Z [inf]  mise node@24.19.0    [3/3] 11.17.0
+
+2026-09-05T17:19:52.649142121Z [inf]  mise pnpm@9.15.9   ✓ installed
+
+2026-09-05T17:19:52.667914294Z [inf]  mise node@24.19.0  ✓ installed
+
+2026-09-05T17:19:52.752299634Z [inf]  The following NEW packages will be installed:
+
+2026-09-05T17:19:52.753392715Z [inf]    libatomic1
+
+2026-09-05T17:19:52.796845262Z [inf]  0 upgraded, 1 newly installed, 0 to remove and 0 not upgraded.
+Need to get 9308 B of archives.
+After this operation, 46.1 kB of additional disk space will be used.
+Get:1 http://deb.debian.org/debian trixie/main amd64 libatomic1 amd64 14.2.0-19 [9308 B]
+
+2026-09-05T17:19:52.965416523Z [inf]  install mise packages: node, pnpm
+2026-09-05T17:19:52.980520358Z [inf]  debconf: unable to initialize frontend: Dialog
+debconf: (TERM is not set, so the dialog frontend is not usable.)
+debconf: falling back to frontend: Readline
+
+2026-09-05T17:19:52.98070808Z [inf]  debconf: unable to initialize frontend: Readline
+debconf: (Can't locate Term/ReadLine.pm in @INC (you may need to install the Term::ReadLine module) (@INC entries checked: /etc/perl /usr/local/lib/x86_64-linux-gnu/perl/5.40.1 /usr/local/share/perl/5.40.1 /usr/lib/x86_64-linux-gnu/perl5/5.40 /usr/share/perl5 /usr/lib/x86_64-linux-gnu/perl-base /usr/lib/x86_64-linux-gnu/perl/5.40 /usr/share/perl/5.40 /usr/local/lib/site_perl) at /usr/share/perl5/Debconf/FrontEnd/Readline.pm line 8, <STDIN> line 1.)
+debconf: falling back to frontend: Teletype
+
+2026-09-05T17:19:52.987259486Z [inf]  copy / /app
+2026-09-05T17:19:52.987480338Z [inf]  debconf: unable to initialize frontend: Teletype
+debconf: (This frontend requires a controlling tty.)
+debconf: falling back to frontend: Noninteractive
+
+2026-09-05T17:19:53.256358032Z [inf]  copy / /app
+2026-09-05T17:19:53.273606477Z [inf]  mkdir -p /app/node_modules/.cache
+2026-09-05T17:19:53.554421864Z [inf]  mkdir -p /app/node_modules/.cache
+2026-09-05T17:19:53.580458073Z [inf]  pnpm add -g node-gyp
+2026-09-05T17:19:53.719475453Z [inf]  Fetched 9308 B in 0s (282 kB/s)
+
+2026-09-05T17:19:53.745676079Z [inf]  Selecting previously unselected package libatomic1:amd64.
+(Reading database ... 
+2026-09-05T17:19:53.746849291Z [inf]  (Reading database ... 5%
+(Reading database ... 10%
+(Reading database ... 15%
+(Reading database ... 20%
+(Reading database ... 25%
+(Reading database ... 30%
+(Reading database ... 35%
+(Reading database ... 40%
+(Reading database ... 45%
+(Reading database ... 50%
+(Reading database ... 55%
+(Reading database ... 60%
+(Reading database ... 65%
+2026-09-05T17:19:53.747930334Z [inf]  (Reading database ... 70%
+2026-09-05T17:19:53.748991737Z [inf]  (Reading database ... 75%
+2026-09-05T17:19:53.749389785Z [inf]  (Reading database ... 80%
+2026-09-05T17:19:53.74978618Z [inf]  (Reading database ... 85%
+2026-09-05T17:19:53.75003252Z [inf]  (Reading database ... 90%
+2026-09-05T17:19:53.750981234Z [inf]  (Reading database ... 95%
+2026-09-05T17:19:53.75203738Z [inf]  (Reading database ... 100%
+(Reading database ... 6220 files and directories currently installed.)
+
+2026-09-05T17:19:53.752939294Z [inf]  Preparing to unpack .../libatomic1_14.2.0-19_amd64.deb ...
+
+2026-09-05T17:19:53.75845841Z [inf]  Unpacking libatomic1:amd64 (14.2.0-19) ...
+
+2026-09-05T17:19:53.789385812Z [inf]  Setting up libatomic1:amd64 (14.2.0-19) ...
+
+2026-09-05T17:19:53.796433493Z [inf]  Processing triggers for libc-bin (2.41-12+deb13u3) ...
+
+2026-09-05T17:19:53.844337813Z [inf]  copy /mise/shims
+2026-09-05T17:19:53.844339896Z [inf]  copy /mise/installs
+2026-09-05T17:19:53.844340788Z [inf]  copy /usr/local/bin/mise
+2026-09-05T17:19:53.844341478Z [inf]  copy /etc/mise/config.toml
+2026-09-05T17:19:53.844342059Z [inf]  copy /root/.local/state/mise
+2026-09-05T17:19:53.951789273Z [inf]  install apt packages: libatomic1
+2026-09-05T17:19:54.110693641Z [inf]  Progress: resolved 1, reused 0, downloaded 0, added 0
+
+2026-09-05T17:19:54.274365546Z [inf]  Packages: +20
+++++++++++++++++++++
+
+2026-09-05T17:19:54.443875957Z [inf]  Progress: resolved 20, reused 20, downloaded 0, added 20, done
+
+2026-09-05T17:19:54.50421075Z [inf]  
+/opt/pnpm/global/5:
++ node-gyp 13.0.2
+
+
+2026-09-05T17:19:54.56154009Z [inf]  Done in 635ms using pnpm v9.15.9
+
+2026-09-05T17:19:54.694455119Z [inf]  pnpm add -g node-gyp
+2026-09-05T17:19:54.715803881Z [inf]  pnpm install --frozen-lockfile --prefer-offline
+2026-09-05T17:19:55.209931189Z [inf]  Scope: all 9 workspace projects
+
+2026-09-05T17:19:55.276615364Z [inf]   ERR_PNPM_LOCKFILE_CONFIG_MISMATCH  Cannot proceed with the frozen installation. The current "overrides" configuration doesn't match the value found in the lockfile
+
+Update your lockfile using "pnpm install --no-frozen-lockfile"
+
+2026-09-05T17:19:55.442171107Z [err]  pnpm install --frozen-lockfile --prefer-offline
+2026-09-05T17:19:55.495079340Z [err]  Build Failed: build daemon returned an error < failed to solve: process "pnpm install --frozen-lockfile --prefer-offline" did not complete successfully: exit code: 1 >
