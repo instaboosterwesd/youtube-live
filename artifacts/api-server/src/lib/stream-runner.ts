@@ -2,6 +2,7 @@ import { spawn, type ChildProcess } from "node:child_process";
 import { existsSync, unlinkSync, writeFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
+import ffmpegPath from "ffmpeg-static";
 import { logger } from "./logger";
 
 export type StreamRunnerStatus = "running" | "stopped" | "failed";
@@ -282,7 +283,7 @@ function launchProcess(process: StreamProcess): void {
   const videoInput = prepareInput(videoPaths);
   const faceInput = facePaths.length ? prepareInput(facePaths) : undefined;
   process.playlistPaths = [videoInput.playlistPath, faceInput?.playlistPath].filter((playlistPath): playlistPath is string => Boolean(playlistPath));
-  const child = spawn("ffmpeg", buildFfmpegArgs(process.input, videoInput, faceInput), {
+  const child = spawn(ffmpegPath ?? "ffmpeg", buildFfmpegArgs(process.input, videoInput, faceInput), {
     stdio: ["ignore", "ignore", "pipe"],
   });
 
