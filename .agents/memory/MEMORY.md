@@ -1,1 +1,2 @@
 - [Railway SSH routing](railway-ssh-routing.md) — the web-terminal HTTP proxy and SSH TCP proxy must target different service ports.
+- [YouTube HLS ingest](youtube-hls-ingest.md) — YouTube HLS templates require FFmpeg to PUT a playlist and individually named media segments through the file query parameter.

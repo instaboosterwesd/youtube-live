@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: streaming
+    description: Live stream control operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,69 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /stream/start:
+    post:
+      operationId: startStream
+      tags: [streaming]
+      summary: Start a live stream
+      description: Starts FFmpeg and sends a selected local category video to the supplied ingest URL.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StreamStartInput"
+      responses:
+        "202":
+          description: Stream process accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StreamControlResponse"
+        "400":
+          description: Invalid stream configuration
+        "409":
+          description: Stream is already running
+        "500":
+          description: Stream process could not start
+  /stream/stop:
+    post:
+      operationId: stopStream
+      tags: [streaming]
+      summary: Stop a live stream
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StreamStopInput"
+      responses:
+        "200":
+          description: Stream stopped
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StreamControlResponse"
+        "404":
+          description: Stream is not running
+  /stream/status/{streamId}:
+    get:
+      operationId: getStreamStatus
+      tags: [streaming]
+      summary: Get stream process status
+      parameters:
+        - name: streamId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Stream status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StreamControlResponse"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +98,47 @@ components:
           type: string
       required:
         - status
+    StreamStartInput:
+      type: object
+      properties:
+        streamId:
+          type: string
+          minLength: 1
+        ingestUrl:
+          type: string
+          minLength: 1
+        category:
+          type: string
+          minLength: 1
+        videoSource:
+          type: string
+      required:
+        - streamId
+        - ingestUrl
+        - category
+    StreamStopInput:
+      type: object
+      properties:
+        streamId:
+          type: string
+          minLength: 1
+      required:
+        - streamId
+    StreamControlResponse:
+      type: object
+      properties:
+        streamId:
+          type: string
+        status:
+          type: string
+          enum: [running, stopped, failed]
+        message:
+          type: string
+        pid:
+          type: ["number", "null"]
+      required:
+        - streamId
+        - status
+        - message
+        - pid
 
