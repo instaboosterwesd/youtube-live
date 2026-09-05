@@ -36,6 +36,8 @@ type StreamProcess = {
   startedAt: string;
   status: StreamRunnerStatus;
   input: StreamRunnerInput;
+  stderrTail?: string;
+  lastError?: string;
   durationTimer?: NodeJS.Timeout;
   restartTimer?: NodeJS.Timeout;
   playlistPaths?: string[];
@@ -56,6 +58,7 @@ function findAsset(assetName: string): string | null {
   ];
   return candidates.find((candidate) => existsSync(candidate)) ?? null;
 }
+
 
 function getVideoPath(category: string, explicitSource?: string): string {
   if (explicitSource && path.isAbsolute(explicitSource) && existsSync(explicitSource)) {
@@ -118,8 +121,23 @@ function validateIngestUrl(rawUrl: string): URL {
 
 function setFile(url: URL, filename: string): string {
   const copy = new URL(url.toString());
-  copy.searchParams.set("file", filename);
+  const params = [...copy.searchParams.entries()]
+    .filter(([key]) => key !== "file")
+    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`);
+  params.push(`file=${encodeURIComponent(filename).replaceAll("%25", "%")}`);
+  copy.search = params.join("&");
   return copy.toString();
+}
+
+function sanitizeFfmpegError(raw: string): string {
+  const lines = raw
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const message = lines.slice(-4).join(" ");
+  return message
+    .replace(/(?:https?|rtmps?):\/\/\S+/gi, "[private ingest URL]")
+    .slice(-700);
 }
 
 function buildFfmpegArgs(
@@ -295,11 +313,14 @@ function launchProcess(process: StreamProcess): void {
     }, process.input.durationMinutes * 60 * 1000);
   }
 
-  child.stderr?.on("data", () => {
-    // FFmpeg output can contain the private ingest URL. Keep it out of logs.
+  child.stderr?.on("data", (chunk: Buffer) => {
+    // Keep only a short, sanitized tail so status can explain a failed process
+    // without exposing the private ingest URL.
+    process.stderrTail = `${process.stderrTail ?? ""}${chunk.toString()}`.slice(-4000);
   });
   child.once("error", (error) => {
     process.status = "failed";
+    process.lastError = error.message;
     logger.error({ streamId: process.input.streamId, error: error.message }, "FFmpeg process error");
   });
   child.once("exit", (code, signal) => {
@@ -328,6 +349,9 @@ function launchProcess(process: StreamProcess): void {
     }
 
     process.status = code === 0 ? "stopped" : "failed";
+    if (process.status === "failed") {
+      process.lastError = sanitizeFfmpegError(process.stderrTail ?? "") || `FFmpeg exited with code ${code ?? "unknown"}.`;
+    }
     logger.info(
       { streamId: process.input.streamId, code, signal, status: process.status },
       "FFmpeg process exited",
@@ -378,6 +402,10 @@ export function getStreamStatus(streamId: string): StreamRunnerResult {
   return resultFor(
     streamId,
     streamProcess,
-    streamProcess.status === "running" ? "FFmpeg stream process is running." : "FFmpeg stream process is no longer running.",
+    streamProcess.status === "running"
+      ? "FFmpeg stream process is running."
+      : streamProcess.status === "failed"
+        ? `FFmpeg failed: ${streamProcess.lastError ?? "The process exited unexpectedly."}`
+        : "FFmpeg stream process is stopped.",
   );
 }

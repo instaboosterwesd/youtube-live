@@ -7,4 +7,4 @@ YouTube HLS ingestion URLs are templates ending in an empty `file=` query parame
 
 **Why:** A normal HLS output URL or an RTMP-style publish command does not satisfy YouTube’s HLS upload contract.
 
-**How to apply:** When changing the stream runner, preserve the per-file `file=` URL construction and avoid logging the full ingest URL because it contains the stream credential.
+**How to apply:** When changing the stream runner, preserve the per-file `file=` URL construction, keep `%05d` segment patterns unescaped inside the final `file=` value, and avoid logging the full ingest URL because it contains the stream credential.
