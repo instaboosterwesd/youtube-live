@@ -523,7 +523,7 @@ function VideosPage({workspace}:{workspace:ReturnType<typeof useWorkspace>}) {
 function SettingsPage({workspace}:{workspace:ReturnType<typeof useWorkspace>}) {
   const [autoSave,setAutoSave]=useState(()=>localStorage.getItem("signal-desk-autosave")!=="off");
   const [compact,setCompact]=useState(()=>localStorage.getItem("signal-desk-compact")==="on");
-  const [cookieFile,setCookieFile]=useState<File>();
+  const [cookieText,setCookieText]=useState("");
   const [cookieBusy,setCookieBusy]=useState(false);
   const [cookieConfigured,setCookieConfigured]=useState(false);
   const [cookieError,setCookieError]=useState("");
@@ -537,13 +537,13 @@ function SettingsPage({workspace}:{workspace:ReturnType<typeof useWorkspace>}) {
       .catch(()=>undefined);
   },[workspace.license?.key,workspace.license?.clientId]);
   const importCookies=async()=>{
-    if(!cookieFile||!workspace.license?.key||!workspace.license.clientId)return;
+    if(!cookieText.trim()||!workspace.license?.key||!workspace.license.clientId)return;
     setCookieBusy(true);setCookieError("");
     try{
-      const response=await fetch("/api/media/youtube-cookies",{method:"POST",headers:{"Content-Type":"text/plain",...cookieHeaders},body:cookieFile});
+      const response=await fetch("/api/media/youtube-cookies",{method:"POST",headers:{"Content-Type":"text/plain",...cookieHeaders},body:cookieText});
       const payload=await response.json() as {error?:string};
       if(!response.ok)throw new Error(payload.error||"Cookie import failed.");
-      setCookieConfigured(true);setCookieFile(undefined);workspace.setToast("YouTube cookies imported on the server");
+      setCookieConfigured(true);setCookieText("");workspace.setToast("YouTube cookies imported on the server");
     }catch(error){setCookieError(error instanceof Error?error.message:"Cookie import failed.");}
     finally{setCookieBusy(false);}
   };
@@ -571,8 +571,8 @@ function SettingsPage({workspace}:{workspace:ReturnType<typeof useWorkspace>}) {
           </section>
           <section className="card setting-section">
             <div className="section-head"><div><h2 className="section-title">YouTube downloader</h2><p className="subtle" style={{margin:"5px 0 0",fontSize:11}}>Import browser cookies when YouTube asks the server to sign in.</p></div><Download size={17} color="#6c8b83"/></div>
-            <div className="field full"><label htmlFor="youtube-cookies-file">YouTube cookies.txt or browser JSON</label><input id="youtube-cookies-file" type="file" accept=".txt,.json,text/plain,application/json" disabled={cookieBusy} onChange={event=>setCookieFile(event.target.files?.[0])} data-testid="input-youtube-cookies"/><span className="field-hint">Your attached JSON cookie export is supported and will be converted securely on the server.</span></div>
-            <div style={{display:"flex",gap:8,alignItems:"center",marginTop:14,flexWrap:"wrap"}}><button className="button" onClick={()=>void importCookies()} disabled={!cookieFile||cookieBusy} data-testid="button-import-youtube-cookies">{cookieBusy?"Saving…":"Import cookies"} <Upload size={14}/></button>{cookieConfigured&&<><span className="status live"><span className="status-dot"/>Configured</span><button className="button ghost small" onClick={()=>void clearCookies()} disabled={cookieBusy} data-testid="button-clear-youtube-cookies">Remove</button></>}</div>
+            <div className="field full"><label htmlFor="youtube-cookies-text">Paste YouTube cookies</label><textarea id="youtube-cookies-text" value={cookieText} onChange={event=>setCookieText(event.target.value)} placeholder="Paste your cookies.txt or browser JSON export here…" spellCheck={false} disabled={cookieBusy} data-testid="textarea-youtube-cookies"/><span className="field-hint">Paste the complete cookie text. Netscape cookies.txt and browser JSON exports are supported.</span></div>
+            <div style={{display:"flex",gap:8,alignItems:"center",marginTop:14,flexWrap:"wrap"}}><button className="button" onClick={()=>void importCookies()} disabled={!cookieText.trim()||cookieBusy} data-testid="button-import-youtube-cookies">{cookieBusy?"Saving…":"Import pasted cookies"} <Download size={14}/></button>{cookieConfigured&&<><span className="status live"><span className="status-dot"/>Configured</span><button className="button ghost small" onClick={()=>void clearCookies()} disabled={cookieBusy} data-testid="button-clear-youtube-cookies">Remove</button></>}</div>
             {cookieError&&<div className="error-note" style={{marginTop:12}}>{cookieError}</div>}
             <div className="form-note" style={{marginTop:17}}><ShieldCheck size={14} style={{verticalAlign:"-3px",marginRight:6}}/>The file is sent to the server and is not saved in browser storage. Re-import it after a redeploy if the server filesystem is reset.</div>
           </section>
