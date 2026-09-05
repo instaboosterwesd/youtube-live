@@ -57,7 +57,7 @@ async function downloadYoutubeVideo(url: string, fileId: string): Promise<{ path
   await mkdir(mediaDir, { recursive: true });
   const outputTemplate = path.join(mediaDir, `${fileId}.%(ext)s`);
   return new Promise((resolve, reject) => {
-    const child = youtubeDownloader.exec(url, {
+    const flags = ({
       noPlaylist: true,
       noWarnings: true,
       noProgress: true,
@@ -68,11 +68,12 @@ async function downloadYoutubeVideo(url: string, fileId: string): Promise<{ path
       ffmpegLocation: ffmpegPath ?? undefined,
       output: outputTemplate,
       printJson: true,
-    });
+    } as unknown) as Parameters<typeof youtubeDownloader.exec>[1];
+    const child = youtubeDownloader.exec(url, flags);
     let stdout = "";
     let stderr = "";
-    child.stdout.on("data", (chunk: Buffer) => { stdout += chunk.toString(); });
-    child.stderr.on("data", (chunk: Buffer) => { stderr += chunk.toString(); });
+    child.stdout?.on("data", (chunk: Buffer) => { stdout += chunk.toString(); });
+    child.stderr?.on("data", (chunk: Buffer) => { stderr += chunk.toString(); });
     child.on("error", reject);
     child.on("close", async (code) => {
       if (code !== 0) {
@@ -151,7 +152,8 @@ router.post("/media/youtube-download", async (req, res): Promise<void> => {
     }));
   } catch (error) {
     const rawMessage = error instanceof Error ? error.message : "The YouTube video could not be downloaded.";
-    const missingDownloader = rawMessage.includes("ENOENT") || rawMessage.includes("yt-dlp");
+    const errorCode = error instanceof Error ? (error as NodeJS.ErrnoException).code : undefined;
+    const missingDownloader = errorCode === "ENOENT" || rawMessage.includes("spawn yt-dlp ENOENT");
     const message = missingDownloader
       ? "The bundled YouTube downloader is unavailable. Redeploy the latest build and try again."
       : rawMessage;
