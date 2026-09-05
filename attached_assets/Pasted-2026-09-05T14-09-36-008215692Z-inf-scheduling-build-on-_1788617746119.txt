@@ -1,0 +1,283 @@
+2026-09-05T14:09:36.008215692Z [inf]  scheduling build on Metal builder "builder-vtpbkz"
+2026-09-05T14:09:37.297755590Z [inf]  unpacking archive
+2026-09-05T14:09:37.464586227Z [inf]  uploading snapshot
+2026-09-05T14:09:37.568320987Z [inf]  using build driver railpack-v0.39.0
+2026-09-05T14:09:37.877624574Z [inf]  [railway] prepare railpack-v0.39.0
+2026-09-05T14:09:37.877626247Z [inf]  local://prepare-driver
+2026-09-05T14:09:37.877626787Z [inf]  local://prepare-context
+2026-09-05T14:09:37.877628710Z [inf]  docker-image://ghcr.io/railwayapp/railpack-builder:latest
+2026-09-05T14:09:37.877711435Z [inf]  local://prepare-driver
+2026-09-05T14:09:37.877713578Z [inf]  docker-image://ghcr.io/railwayapp/railpack-builder:latest
+2026-09-05T14:09:37.877806727Z [inf]  local://prepare-context
+2026-09-05T14:09:37.878088200Z [inf]  local://prepare-context
+2026-09-05T14:09:37.878091715Z [inf]  local://prepare-driver
+2026-09-05T14:09:37.956212390Z [inf]  docker-image://ghcr.io/railwayapp/railpack-builder:latest
+2026-09-05T14:09:37.956532070Z [inf]  docker-image://ghcr.io/railwayapp/railpack-builder:latest
+2026-09-05T14:09:37.996928278Z [inf]  local://prepare-driver
+2026-09-05T14:09:37.996937041Z [inf]  docker-image://ghcr.io/railwayapp/railpack-builder:latest
+2026-09-05T14:09:38.081412847Z [inf]  local://prepare-context
+2026-09-05T14:09:38.103730564Z [inf]  [railway] prepare railpack-v0.39.0
+2026-09-05T14:09:39.909229673Z [inf]                     
+[38;2;125;86;243m╭─────────────────╮[0m
+[38;2;125;86;243m│[0m Railpack 0.39.0 [38;2;125;86;243m│[0m
+[38;2;125;86;243m╰─────────────────╯[0m
+
+  [97m↳ Detected Node[0m
+  [97m↳ Using pnpm package manager[0m
+  [97m↳ Found workspace with 8 packages[0m
+  [97m↳ Custom start command detected, skipping Caddy start[0m
+            
+  [1mPackages[0m  
+  [38;5;238m──────────[0m
+  [95mnode[0m  [38;5;238m│[0m  [96m24.19.0[0m  [38;5;238m│[0m  railpack default (lts)
+  [95mpnpm[0m  [38;5;238m│[0m  [96m9.15.9[0m   [38;5;238m│[0m  pnpm-lock.yaml (9)
+            
+  [1mSteps[0m     
+  [38;5;238m──────────[0m
+  [95m▸ install[0m
+    [38;5;245m$[0m [1mpnpm add -g node-gyp[0m
+    [38;5;245m$[0m [1mpnpm install --frozen-lockfile --prefer-offline[0m
+         
+  [95m▸ build[0m
+    [38;5;245m$[0m [1mpnpm run build[0m
+            
+  [1mDeploy[0m    
+  [38;5;238m──────────[0m
+    [38;5;245m$[0m [1mpnpm run start[0m
+
+
+2026-09-05T14:09:40.169667335Z [inf]  [railway] prepare railpack-v0.39.0
+2026-09-05T14:09:40.408024888Z [inf]  resolve image config for docker-image://ghcr.io/railwayapp/railpack-frontend:v0.39.0
+2026-09-05T14:09:40.539884323Z [inf]  resolve image config for docker-image://ghcr.io/railwayapp/railpack-frontend:v0.39.0
+2026-09-05T14:09:40.540212786Z [inf]  docker-image://ghcr.io/railwayapp/railpack-frontend:v0.39.0@sha256:db24dc37640b6887c3d455b40876ea30f75182964479670cba6e4cde7ffef103
+2026-09-05T14:09:40.540223102Z [inf]  docker-image://ghcr.io/railwayapp/railpack-frontend:v0.39.0@sha256:db24dc37640b6887c3d455b40876ea30f75182964479670cba6e4cde7ffef103
+2026-09-05T14:09:40.557656996Z [inf]  docker-image://ghcr.io/railwayapp/railpack-frontend:v0.39.0@sha256:db24dc37640b6887c3d455b40876ea30f75182964479670cba6e4cde7ffef103
+2026-09-05T14:09:40.558174042Z [inf]  docker-image://ghcr.io/railwayapp/railpack-frontend:v0.39.0@sha256:db24dc37640b6887c3d455b40876ea30f75182964479670cba6e4cde7ffef103
+2026-09-05T14:09:40.751140528Z [inf]  load build definition from ./railpack-plan.json
+2026-09-05T14:09:40.751405586Z [inf]  load build definition from ./railpack-plan.json
+2026-09-05T14:09:40.751651735Z [inf]  load build definition from ./railpack-plan.json
+2026-09-05T14:09:40.835478867Z [inf]  load build definition from ./railpack-plan.json
+2026-09-05T14:09:40.901234188Z [inf]  loading .
+2026-09-05T14:09:40.901236591Z [inf]  copy /root/.local/state/mise
+2026-09-05T14:09:40.901237363Z [inf]  copy /etc/mise/config.toml
+2026-09-05T14:09:40.901238274Z [inf]  copy /usr/local/bin/mise
+2026-09-05T14:09:40.901238895Z [inf]  copy /mise/installs
+2026-09-05T14:09:40.901239506Z [inf]  mkdir -p /app/node_modules/.cache
+2026-09-05T14:09:40.901240648Z [inf]  install mise packages: node, pnpm
+2026-09-05T14:09:40.901241439Z [inf]  create mise config
+2026-09-05T14:09:40.901242080Z [inf]  mkdir /etc/mise
+2026-09-05T14:09:40.901242651Z [inf]  docker-image://ghcr.io/railwayapp/railpack-builder:mise-2026.8.16
+2026-09-05T14:09:40.901243252Z [inf]  install apt packages: libatomic1
+2026-09-05T14:09:40.901243853Z [inf]  copy / /app
+2026-09-05T14:09:40.901244914Z [inf]  pnpm add -g node-gyp
+2026-09-05T14:09:40.901245565Z [inf]  docker-image://ghcr.io/railwayapp/railpack-runtime:mise-2026.8.16
+2026-09-05T14:09:40.901248950Z [inf]  copy /mise/shims
+2026-09-05T14:09:40.901290242Z [inf]  [railpack] merge $packages:apt:runtime, $packages:mise, $build, $build
+2026-09-05T14:09:40.901291013Z [inf]  copy /app
+2026-09-05T14:09:40.901291654Z [inf]  copy /root/.cache
+2026-09-05T14:09:40.901292806Z [inf]  copy /app/node_modules
+2026-09-05T14:09:40.901293427Z [inf]  pnpm run build
+2026-09-05T14:09:40.901294048Z [inf]  [railpack] secrets hash
+2026-09-05T14:09:40.901294699Z [inf]  copy / /app
+2026-09-05T14:09:40.901295320Z [inf]  pnpm install --frozen-lockfile --prefer-offline
+2026-09-05T14:09:40.901571504Z [inf]  docker-image://ghcr.io/railwayapp/railpack-runtime:mise-2026.8.16
+2026-09-05T14:09:40.901572847Z [inf]  docker-image://ghcr.io/railwayapp/railpack-builder:mise-2026.8.16
+2026-09-05T14:09:40.901677433Z [inf]  [railpack] secrets hash
+2026-09-05T14:09:40.901678495Z [inf]  loading .
+2026-09-05T14:09:40.901827739Z [inf]  loading .
+2026-09-05T14:09:41.004422227Z [inf]  docker-image://ghcr.io/railwayapp/railpack-builder:mise-2026.8.16
+2026-09-05T14:09:41.006272475Z [inf]  loading .
+2026-09-05T14:09:41.006274658Z [inf]  [railpack] secrets hash
+2026-09-05T14:09:41.050038933Z [inf]  docker-image://ghcr.io/railwayapp/railpack-runtime:mise-2026.8.16
+2026-09-05T14:09:41.134669201Z [inf]  [railpack] secrets hash
+2026-09-05T14:09:41.155492033Z [inf]  install apt packages: libatomic1
+2026-09-05T14:09:41.155494536Z [inf]  mkdir /etc/mise
+2026-09-05T14:09:41.155495328Z [inf]  create mise config
+2026-09-05T14:09:41.155495889Z [inf]  install mise packages: node, pnpm
+2026-09-05T14:09:41.155496690Z [inf]  copy /mise/shims
+2026-09-05T14:09:41.155497231Z [inf]  copy /mise/installs
+2026-09-05T14:09:41.155498673Z [inf]  copy /usr/local/bin/mise
+2026-09-05T14:09:41.155499464Z [inf]  copy /etc/mise/config.toml
+2026-09-05T14:09:41.155500265Z [inf]  copy /root/.local/state/mise
+2026-09-05T14:09:41.190952791Z [inf]  loading .
+2026-09-05T14:09:41.190962546Z [inf]  install apt packages: libatomic1
+2026-09-05T14:09:41.190979231Z [inf]  copy /root/.local/state/mise
+2026-09-05T14:09:41.228149305Z [inf]  install mise packages: node, pnpm
+2026-09-05T14:09:41.228229406Z [inf]  copy / /app
+2026-09-05T14:09:41.735930402Z [inf]  copy / /app
+2026-09-05T14:09:41.756995758Z [inf]  mkdir -p /app/node_modules/.cache
+2026-09-05T14:09:42.388001676Z [inf]  mkdir -p /app/node_modules/.cache
+2026-09-05T14:09:42.408319239Z [inf]  pnpm add -g node-gyp
+2026-09-05T14:09:43.003142174Z [inf]  Progress: resolved 1, reused 0, downloaded 0, added 0
+
+2026-09-05T14:09:43.150632616Z [inf]  Packages: +20
+++++++++++++++++++++
+
+2026-09-05T14:09:43.280519439Z [inf]  Progress: resolved 20, reused 20, downloaded 0, added 20, done
+
+2026-09-05T14:09:43.356809305Z [inf]  
+/opt/pnpm/global/5:
++ node-gyp 13.0.2
+
+
+2026-09-05T14:09:43.392611977Z [inf]  Done in 569ms using pnpm v9.15.9
+
+2026-09-05T14:09:43.494526454Z [inf]  pnpm add -g node-gyp
+2026-09-05T14:09:43.515894514Z [inf]  pnpm install --frozen-lockfile --prefer-offline
+2026-09-05T14:09:43.984206916Z [inf]  Scope: all 9 workspace projects
+
+2026-09-05T14:09:44.03559777Z [inf]  Lockfile is up to date, resolution step is skipped
+
+2026-09-05T14:09:44.110721596Z [inf]  Progress: resolved 1, reused 0, downloaded 0, added 0
+
+2026-09-05T14:09:44.188855791Z [inf]  Packages: +487
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+2026-09-05T14:09:45.111385943Z [inf]  Progress: resolved 487, reused 487, downloaded 0, added 470
+
+2026-09-05T14:09:45.534181117Z [inf]  Progress: resolved 487, reused 487, downloaded 0, added 487, done
+
+2026-09-05T14:09:46.532699202Z [inf]  
+dependencies:
++ @replit/connectors-sdk 0.4.1
+
+devDependencies:
++ prettier 3.9.6
++ typescript 5.9.3
+
+
+2026-09-05T14:09:46.566719137Z [inf]  . preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+
+2026-09-05T14:09:46.584157428Z [inf]  . preinstall: Done
+
+2026-09-05T14:09:46.79782996Z [inf]  Done in 2.9s using pnpm v9.15.9
+
+2026-09-05T14:09:47.136450842Z [inf]  pnpm install --frozen-lockfile --prefer-offline
+2026-09-05T14:09:47.155077587Z [inf]  copy / /app
+2026-09-05T14:09:47.499618256Z [inf]  copy / /app
+2026-09-05T14:09:47.521064874Z [inf]  pnpm run build
+2026-09-05T14:09:48.114337983Z [inf]  
+> workspace@0.0.0 build /app
+> pnpm run typecheck && PORT=${PORT:-26180} BASE_PATH=${BASE_PATH:-/} pnpm -r --if-present run build
+
+
+2026-09-05T14:09:48.300214555Z [inf]  
+> workspace@0.0.0 typecheck /app
+> pnpm run typecheck:libs && pnpm -r --filter "./artifacts/**" --filter "./scripts" --if-present run typecheck
+
+
+2026-09-05T14:09:48.494176445Z [inf]  
+> workspace@0.0.0 typecheck:libs /app
+> tsc --build
+
+
+2026-09-05T14:09:50.667943676Z [inf]  Scope: 4 of 9 workspace projects
+
+2026-09-05T14:09:50.669026752Z [inf]  artifacts/api-server typecheck$ tsc -p tsconfig.json --noEmit
+
+2026-09-05T14:09:50.669496437Z [inf]  artifacts/live typecheck$ tsc -p tsconfig.json --noEmit
+
+2026-09-05T14:09:50.669772111Z [inf]  artifacts/mockup-sandbox typecheck$ tsc -p tsconfig.json --noEmit
+
+2026-09-05T14:09:50.670099733Z [inf]  scripts typecheck$ tsc -p tsconfig.json --noEmit
+
+2026-09-05T14:09:51.202208874Z [inf]  scripts typecheck: Done
+
+2026-09-05T14:09:51.651533639Z [inf]  artifacts/api-server typecheck: Done
+
+2026-09-05T14:09:54.128045348Z [inf]  artifacts/mockup-sandbox typecheck: Done
+
+2026-09-05T14:09:54.703432164Z [inf]  artifacts/live typecheck: Done
+
+2026-09-05T14:09:54.747777400Z [inf]  docker-image://ghcr.io/railwayapp/railpack-builder:mise-2026.8.16
+2026-09-05T14:09:54.747854826Z [inf]  docker-image://ghcr.io/railwayapp/railpack-builder:mise-2026.8.16
+2026-09-05T14:09:54.934985922Z [inf]  Scope: 8 of 9 workspace projects
+
+2026-09-05T14:09:54.93605064Z [inf]  artifacts/mockup-sandbox build$ vite build
+
+2026-09-05T14:09:55.290412043Z [inf]  artifacts/mockup-sandbox build: [36mvite v7.3.6 [32mbuilding client environment for production...[36m[39m
+
+2026-09-05T14:09:55.361805839Z [inf]  artifacts/mockup-sandbox build: transforming...
+
+2026-09-05T14:09:56.188944066Z [inf]  artifacts/mockup-sandbox build: [32m✓[39m 30 modules transformed.
+
+2026-09-05T14:09:56.355622125Z [inf]  artifacts/mockup-sandbox build: rendering chunks...
+
+2026-09-05T14:09:56.364825973Z [inf]  artifacts/mockup-sandbox build: computing gzip size...
+
+2026-09-05T14:09:56.379274264Z [inf]  artifacts/mockup-sandbox build: [2mdist/[22m[32mindex.html                 [39m[1m[2m  4.42 kB[22m[1m[22m[2m │ gzip:  1.23 kB[22m
+
+2026-09-05T14:09:56.380014255Z [inf]  artifacts/mockup-sandbox build: [2mdist/[22m[2massets/[22m[35mindex-C4GxwS3y.css  [39m[1m[2m 88.37 kB[22m[1m[22m[2m │ gzip: 14.82 kB[22m
+
+2026-09-05T14:09:56.380662769Z [inf]  artifacts/mockup-sandbox build: [2mdist/[22m[2massets/[22m[36mindex-CqOx4XgY.js   [39m[1m[2m187.72 kB[22m[1m[22m[2m │ gzip: 59.51 kB[22m
+
+2026-09-05T14:09:56.381188358Z [inf]  artifacts/mockup-sandbox build: [32m✓ built in 1.07s[39m
+
+2026-09-05T14:09:56.436596223Z [inf]  artifacts/mockup-sandbox build: Done
+
+2026-09-05T14:09:56.437940802Z [inf]  artifacts/api-server build$ node ./build.mjs
+
+2026-09-05T14:09:56.438647864Z [inf]  artifacts/live build$ vite build --config vite.config.ts
+
+2026-09-05T14:09:56.657676558Z [inf]  artifacts/api-server build:   dist/index.mjs                       1.4mb ⚠️
+
+2026-09-05T14:09:56.658308517Z [inf]  artifacts/api-server build:   dist/pino-worker.mjs               153.4kb
+
+2026-09-05T14:09:56.658740095Z [inf]  artifacts/api-server build:   dist/pino-file.mjs                 142.0kb
+
+2026-09-05T14:09:56.659061828Z [inf]  artifacts/api-server build:   dist/pino-pretty.mjs               114.4kb
+
+2026-09-05T14:09:56.659393145Z [inf]  artifacts/api-server build:   dist/thread-stream-worker.mjs        7.3kb
+
+2026-09-05T14:09:56.659614217Z [inf]  artifacts/api-server build:   dist/index.mjs.map                   2.2mb
+
+2026-09-05T14:09:56.659910512Z [inf]  artifacts/api-server build:   dist/pino-worker.mjs.map           256.9kb
+
+2026-09-05T14:09:56.660088609Z [inf]  artifacts/api-server build:   dist/pino-file.mjs.map             229.0kb
+
+2026-09-05T14:09:56.660483102Z [inf]  artifacts/api-server build:   dist/pino-pretty.mjs.map           203.6kb
+
+2026-09-05T14:09:56.660705656Z [inf]  artifacts/api-server build:   dist/thread-stream-worker.mjs.map   12.0kb
+
+2026-09-05T14:09:56.66092168Z [inf]  artifacts/api-server build: ⚡ Done in 139ms
+
+2026-09-05T14:09:56.668179887Z [inf]  artifacts/api-server build: Done
+
+2026-09-05T14:09:56.686009085Z [inf]  artifacts/live build: [36mvite v7.3.6 [32mbuilding client environment for production...[36m[39m
+
+2026-09-05T14:09:56.735023221Z [inf]  artifacts/live build: transforming...
+
+2026-09-05T14:09:57.445463195Z [inf]  artifacts/live build: [33msrc/components/ui/tooltip.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.[39m
+
+2026-09-05T14:09:58.89195118Z [inf]  artifacts/live build: [32m✓[39m 1772 modules transformed.
+
+2026-09-05T14:09:59.192708656Z [inf]  artifacts/live build: rendering chunks...
+
+2026-09-05T14:09:59.207852743Z [inf]  artifacts/live build: computing gzip size...
+
+2026-09-05T14:09:59.237386953Z [inf]  artifacts/live build: [2mdist/public/[22m[32mindex.html                 [39m[1m[2m  1.41 kB[22m[1m[22m[2m │ gzip:   0.55 kB[22m
+
+2026-09-05T14:09:59.237809157Z [inf]  artifacts/live build: [2mdist/public/[22m[2massets/[22m[35mindex-D7bqpLcI.css  [39m[1m[2m106.44 kB[22m[1m[22m[2m │ gzip:  19.49 kB[22m
+
+2026-09-05T14:09:59.237972943Z [inf]  artifacts/live build: [2mdist/public/[22m[2massets/[22m[36mindex-A9sbQ4KI.js   [39m[1m[2m389.64 kB[22m[1m[22m[2m │ gzip: 121.67 kB[22m
+
+2026-09-05T14:09:59.238398812Z [inf]  artifacts/live build: [32m✓ built in 2.54s[39m
+
+2026-09-05T14:09:59.309692017Z [inf]  artifacts/live build: Done
+
+2026-09-05T14:09:59.487318603Z [inf]  pnpm run build
+2026-09-05T14:10:00.428175238Z [inf]  copy /root/.cache
+2026-09-05T14:10:00.547215757Z [inf]  copy /root/.cache
+2026-09-05T14:10:02.179377530Z [inf]  copy /app/node_modules
+2026-09-05T14:10:02.404045090Z [inf]  copy /app
+2026-09-05T14:10:02.776556923Z [inf]  copy /app
+2026-09-05T14:10:04.912343482Z [inf]  copy /app/node_modules
+2026-09-05T14:10:04.938002224Z [inf]  [railpack] merge $packages:apt:runtime, $packages:mise, $build, $build
+2026-09-05T14:10:05.279054556Z [inf]  [railpack] merge $packages:apt:runtime, $packages:mise, $build, $build
+2026-09-05T14:10:05.303535050Z [inf]  exporting to docker image format
+2026-09-05T14:10:11.743579858Z [inf]  exporting to docker image format
+2026-09-05T14:10:11.859430969Z [inf]  containerimage.digest: sha256:90fcb3abd6517e88e7f2d60b07cd8db5878db7696b053ac86df52efb83c33fe0
+2026-09-05T14:10:11.859436347Z [inf]  containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6OTBmY2IzYWJkNjUxN2U4OGU3ZjJkNjBiMDdjZDhkYjU4NzhkYjc2OTZiMDUzYWM4NmRmNTJlZmI4M2MzM2ZlMCIsInNpemUiOjIzOTIsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wOS0wNVQxNDoxMDoxMFoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+2026-09-05T14:10:11.859439832Z [inf]  containerimage.config.digest: sha256:39970d480401ed43b74781e0e9fd6012a5024b94289c11608550084b8e93ea3a
+2026-09-05T14:10:23.041793018Z [inf]  image push
+2026-09-05T14:10:23.041811896Z [inf]  image push
