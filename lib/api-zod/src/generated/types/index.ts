@@ -14,3 +14,5 @@ export * from './streamStartInput';
 export * from './streamStartInputAspectRatio';
 export * from './streamStartInputFacePosition';
 export * from './streamStopInput';
+export * from './youtubeDownloadInput';
+export * from './youtubeDownloadResponse';

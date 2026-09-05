@@ -145,6 +145,26 @@ paths:
                 format: binary
         "404":
           description: Media file not found
+  /media/youtube-download:
+    post:
+      operationId: downloadYoutubeVideo
+      tags: [media]
+      summary: Download a YouTube video at the best available quality
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/YoutubeDownloadInput"
+      responses:
+        "201":
+          description: YouTube video downloaded and ready for streaming
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/YoutubeDownloadResponse"
+        "400":
+          description: Invalid URL or download failure
 components:
   schemas:
     HealthStatus:
@@ -237,4 +257,34 @@ components:
         - filename
         - sourcePath
         - playbackUrl
+    YoutubeDownloadInput:
+      type: object
+      properties:
+        url:
+          type: string
+          minLength: 1
+      required:
+        - url
+    YoutubeDownloadResponse:
+      type: object
+      properties:
+        fileId:
+          type: string
+        filename:
+          type: string
+        sourcePath:
+          type: string
+        playbackUrl:
+          type: string
+        title:
+          type: string
+        duration:
+          type: string
+      required:
+        - fileId
+        - filename
+        - sourcePath
+        - playbackUrl
+        - title
+        - duration
 

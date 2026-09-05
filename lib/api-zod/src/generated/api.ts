@@ -120,3 +120,23 @@ export const GetMediaFileParams = zod.object({
 export const GetMediaFileResponse = zod.unknown()
 
 
+/**
+ * @summary Download a YouTube video at the best available quality
+ */
+
+
+
+export const DownloadYoutubeVideoBody = zod.object({
+  "url": zod.string().min(1)
+})
+
+export const DownloadYoutubeVideoResponse = zod.object({
+  "fileId": zod.string(),
+  "filename": zod.string(),
+  "sourcePath": zod.string(),
+  "playbackUrl": zod.string(),
+  "title": zod.string(),
+  "duration": zod.string()
+})
+
+

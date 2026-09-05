@@ -83,3 +83,17 @@ export interface MediaUploadResponse {
   playbackUrl: string;
 }
 
+export interface YoutubeDownloadInput {
+  /** @minLength 1 */
+  url: string;
+}
+
+export interface YoutubeDownloadResponse {
+  fileId: string;
+  filename: string;
+  sourcePath: string;
+  playbackUrl: string;
+  title: string;
+  duration: string;
+}
+

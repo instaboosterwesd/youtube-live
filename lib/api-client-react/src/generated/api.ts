@@ -24,7 +24,9 @@ import type {
   MediaUploadResponse,
   StreamControlResponse,
   StreamStartInput,
-  StreamStopInput
+  StreamStopInput,
+  YoutubeDownloadInput,
+  YoutubeDownloadResponse
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -499,4 +501,75 @@ export function useGetMediaFile<TData = Awaited<ReturnType<typeof getMediaFile>>
 
 
 
+
+export const getDownloadYoutubeVideoUrl = () => {
+
+
+
+
+  return `/api/media/youtube-download`
+}
+
+/**
+ * @summary Download a YouTube video at the best available quality
+ */
+export const downloadYoutubeVideo = async (youtubeDownloadInput: YoutubeDownloadInput, options?: Parameters<typeof customFetch>[1]): Promise<YoutubeDownloadResponse> => {
+
+  return customFetch<YoutubeDownloadResponse>(getDownloadYoutubeVideoUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(youtubeDownloadInput)
+  }
+);}
+
+
+
+
+
+export const getDownloadYoutubeVideoMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof downloadYoutubeVideo>>, TError,{data: BodyType<YoutubeDownloadInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof downloadYoutubeVideo>>, TError,{data: BodyType<YoutubeDownloadInput>}, TContext> => {
+
+const mutationKey = ['downloadYoutubeVideo'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof downloadYoutubeVideo>>, {data: BodyType<YoutubeDownloadInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  downloadYoutubeVideo(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DownloadYoutubeVideoMutationResult = NonNullable<Awaited<ReturnType<typeof downloadYoutubeVideo>>>
+    export type DownloadYoutubeVideoMutationBody = BodyType<YoutubeDownloadInput>
+    export type DownloadYoutubeVideoMutationError = ErrorType<void>
+
+    /**
+ * @summary Download a YouTube video at the best available quality
+ */
+export const useDownloadYoutubeVideo = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof downloadYoutubeVideo>>, TError,{data: BodyType<YoutubeDownloadInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof downloadYoutubeVideo>>,
+        TError,
+        {data: BodyType<YoutubeDownloadInput>},
+        TContext
+      > => {
+      return useMutation(getDownloadYoutubeVideoMutationOptions(options));
+    }
 
