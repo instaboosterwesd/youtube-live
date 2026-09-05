@@ -58,6 +58,7 @@ async function downloadYoutubeVideo(url: string, fileId: string): Promise<{ path
       "--no-warnings",
       "--no-progress",
       "--socket-timeout", "30",
+      "--extractor-args", "youtube:player_client=android",
       "--format", "bestvideo*+bestaudio/best",
       "--merge-output-format", "mp4",
       "--output", outputTemplate,
