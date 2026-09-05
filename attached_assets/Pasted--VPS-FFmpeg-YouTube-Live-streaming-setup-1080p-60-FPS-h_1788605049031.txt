@@ -1,0 +1,43 @@
+मेरे VPS पर FFmpeg के जरिए YouTube Live streaming setup है। मैं 1080p 60 FPS की high-quality video stream कर रहा हूँ, लेकिन YouTube Live पर stream केवल 720p या noticeably low quality में दिखाई दे रही है, जबकि source video VPS पर itself सही quality में चल रही है।
+
+मुझे existing setup को बिना unnecessary बदलाव किए diagnose और fix करना है।
+
+इन सभी चीजों को systematically check करो:
+
+1. Current FFmpeg command/configuration inspect करो।
+2. Input video का वास्तविक resolution, FPS, codec और bitrate verify करो।
+3. FFmpeg output में resolution कहीं 1280x720 पर force तो नहीं किया गया है, check करो।
+4. Output को 1920x1080 और 60 FPS पर maintain करो।
+5. Video को अनजाने में scale/downscale करने वाली settings हटाओ।
+6. Encoder कौन-सा इस्तेमाल हो रहा है (libx264, NVENC, VAAPI आदि) check करो।
+7. VPS में available CPU cores, CPU usage, RAM और GPU hardware encoding availability check करो।
+8. अगर CPU encoding हो रही है और CPU पर्याप्त नहीं है, तो ऐसा encoder/preset चुनो जिससे encoding realtime में stable रहे।
+9. FFmpeg logs में dropped frames, duplicated frames, encoding overload, speed < 1.0x या अन्य bottlenecks check करो।
+10. YouTube RTMP output settings verify करो:
+
+* Resolution: 1920x1080
+* FPS: 60
+* Constant/appropriate video bitrate
+* Keyframe interval: 2 seconds
+* Pixel format: yuv420p
+* H.264 video encoding
+* AAC audio
+
+11. Bitrate बहुत कम हो तो उचित 1080p60 bitrate configure करो; source quality को unnecessarily compress मत करो।
+12. YouTube Live के recommended ingest settings के साथ configuration compare करो।
+13. Network upload speed और packet loss भी test करो ताकि streaming के दौरान bitrate sustain हो सके।
+14. यह भी verify करो कि YouTube Studio में stream/output settings या source limitations के कारण 1080p60 unavailable तो नहीं हो रहा।
+15. अगर YouTube processing की वजह से temporary lower quality दिखाई दे रही हो, तो उसे encoder problem समझकर गलत configuration मत बदलना।
+16. Existing process/service को पहले inspect करो और फिर minimal changes करके fix करो।
+17. Final working FFmpeg command/configuration provide करो।
+18. Stream शुरू करने के बाद FFmpeg console/log से verify करो कि:
+
+* output वास्तव में 1920x1080 है
+* FPS लगभग 60 है
+* encoding speed realtime से कम नहीं हो रही
+* frames drop नहीं हो रहे
+* bitrate expected range में है।
+
+महत्वपूर्ण: केवल 1080p resolution force मत करो। पहले root cause identify करो कि 720p क्यों जा रहा है। अगर VPS hardware 1080p60 realtime encoding के लिए पर्याप्त नहीं है, तो साफ बताओ कि bottleneck CPU/GPU/network में कौन-सा है और सबसे efficient solution दो।
+
+मेरी original 1080p60 source quality को maximum practical quality में YouTube Live तक preserve करना लक्ष्य है।

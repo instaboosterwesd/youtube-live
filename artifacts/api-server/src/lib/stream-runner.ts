@@ -129,8 +129,8 @@ function buildFfmpegArgs(
   const ingestUrl = validateIngestUrl(input.ingestUrl);
   const aspectRatio = input.aspectRatio ?? "full";
   const dimensions = {
-    shorts: [720, 1280],
-    full: [1280, 720],
+    shorts: [1080, 1920],
+    full: [1920, 1080],
     square: [1080, 1080],
   }[aspectRatio];
   const [width, height] = dimensions;
@@ -190,23 +190,33 @@ function buildFfmpegArgs(
         "-c:v",
         "libx264",
         "-preset",
-        "faster",
+        "veryfast",
         "-tune",
         "zerolatency",
-        "-crf",
-        "18",
+        "-b:v",
+        "8M",
+        "-minrate",
+        "8M",
         "-maxrate",
-        aspectRatio === "shorts" ? "7M" : "10M",
+        "8M",
         "-bufsize",
-        aspectRatio === "shorts" ? "14M" : "20M",
+        "16M",
         "-profile:v",
         "high",
+        "-level",
+        "4.2",
         "-pix_fmt",
         "yuv420p",
         "-r",
-        "30",
-        "-g",
         "60",
+        "-g",
+        "120",
+        "-keyint_min",
+        "120",
+        "-sc_threshold",
+        "0",
+        "-fps_mode",
+        "cfr",
       ]
     : ["-map", "0:v:0", "-c:v", "copy"];
 
