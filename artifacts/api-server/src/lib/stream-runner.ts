@@ -294,6 +294,8 @@ function resultFor(streamId: string, process: StreamProcess, message: string): S
 
 function launchProcess(process: StreamProcess): void {
   cleanupPlaylists(process);
+  process.stderrTail = undefined;
+  process.lastError = undefined;
   const videoPaths = getVideoPaths(process.input.category, process.input.videoSources, process.input.videoSource);
   const facePaths = process.input.faceCategory
     ? getVideoPaths(process.input.faceCategory, process.input.faceSources, process.input.faceSource)
@@ -350,10 +352,14 @@ function launchProcess(process: StreamProcess): void {
 
     process.status = code === 0 ? "stopped" : "failed";
     if (process.status === "failed") {
-      process.lastError = sanitizeFfmpegError(process.stderrTail ?? "") || `FFmpeg exited with code ${code ?? "unknown"}.`;
+      const details = sanitizeFfmpegError(process.stderrTail ?? "");
+      const termination = signal
+        ? `terminated by ${signal}`
+        : `exited with code ${code ?? "unknown"}`;
+      process.lastError = details ? `${details} (FFmpeg ${termination}.)` : `FFmpeg ${termination}.`;
     }
     logger.info(
-      { streamId: process.input.streamId, code, signal, status: process.status },
+      { streamId: process.input.streamId, code, signal, status: process.status, error: process.lastError },
       "FFmpeg process exited",
     );
   });
