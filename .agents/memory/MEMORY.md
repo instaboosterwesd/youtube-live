@@ -3,6 +3,7 @@
 - [Railway Railpack runtime packages](railway-railpack-runtime-packages.md) — current Railpack builds need railpack.json for runtime apt packages; nixpacks.toml may be ignored.
 - [YouTube HLS ingest](youtube-hls-ingest.md) — YouTube HLS templates require FFmpeg to PUT a playlist and individually named media segments through the file query parameter.
 - [YouTube downloader clients](youtube-downloader-clients.md) — some public videos fail yt-dlp's default client; keep the Android player-client fallback for downloads.
+- [YouTube cookie handling](youtube-cookie-handling.md) — browser cookies are credentials; import them through protected server settings, never workspace data or chat.
 - [Firebase licensing security](firebase-licensing-security.md) — public Realtime Database rules make app-level owner passwords non-secure; harden rules/auth before production.
 - [Public media builds](public-media-builds.md) — ignored local media must not be statically imported by the frontend; clean public checkouts should use runtime uploads/API media.
 - [Railway project access](railway-project-access.md) — Railway CLI can be authenticated while no project is available; Personal workspace creation may require an upgrade.
