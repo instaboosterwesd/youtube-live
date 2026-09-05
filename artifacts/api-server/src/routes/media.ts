@@ -13,7 +13,10 @@ import ffmpegPath from "ffmpeg-static";
 import { authorizeLicenseSession } from "./licenses";
 
 const router: IRouter = Router();
-const mediaDir = path.resolve(process.cwd(), "attached_assets", "live-media");
+const configuredMediaDir = process.env.MEDIA_DIR?.trim();
+const mediaDir = configuredMediaDir
+  ? path.resolve(configuredMediaDir)
+  : path.resolve(process.cwd(), "attached_assets", "live-media");
 const importedYoutubeCookiesPath = path.join(mediaDir, "youtube-cookies.txt");
 const maxUploadBytes = 1.5 * 1024 * 1024 * 1024;
 const maxYoutubeDownloadBytes = 1.5 * 1024 * 1024 * 1024;
@@ -187,6 +190,39 @@ type ApifyVideoResult = {
   durationSeconds?: unknown;
 };
 
+async function writeApifyResponse(response: Response, destination: string): Promise<number> {
+  if (!response.ok || !response.body) return 0;
+
+  const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
+  if (contentType.includes("application/json") || contentType.includes("text/html") || contentType.includes("text/plain")) {
+    throw new Error("Apify returned an error response instead of a video file.");
+  }
+
+  const contentLength = Number(response.headers.get("content-length"));
+  if (Number.isFinite(contentLength) && contentLength > maxYoutubeDownloadBytes) {
+    throw new Error("The Apify video is larger than the server storage limit.");
+  }
+
+  let received = 0;
+  const sizeLimit = new Transform({
+    transform(chunk: Buffer, _encoding, callback) {
+      received += chunk.length;
+      if (received > maxYoutubeDownloadBytes) {
+        callback(new Error("The Apify video is larger than 1.5 GB."));
+        return;
+      }
+      callback(null, chunk);
+    },
+  });
+
+  await pipeline(
+    Readable.fromWeb(response.body as Parameters<typeof Readable.fromWeb>[0]),
+    sizeLimit,
+    createWriteStream(destination, { mode: 0o600 }),
+  );
+  return received;
+}
+
 async function downloadWithApify(url: string, fileId: string): Promise<{ path: string; title: string; duration: string }> {
   const connectors = new ReplitConnectors();
   const actorResponse = await connectors.proxy(
@@ -213,28 +249,55 @@ async function downloadWithApify(url: string, fileId: string): Promise<{ path: s
   if (fileUrl.hostname !== "api.apify.com") {
     throw new Error("Apify returned an unexpected media host.");
   }
-  const mediaResponse = await connectors.proxy("apify", `${fileUrl.pathname}${fileUrl.search}`, { method: "GET" });
-  if (!mediaResponse.ok || !mediaResponse.body) {
-    throw new Error(`Apify media download failed with HTTP ${mediaResponse.status}.`);
-  }
 
   await mkdir(mediaDir, { recursive: true });
   const destination = path.join(mediaDir, `${fileId}.mp4`);
+  const tempPath = `${destination}.part`;
+  const mediaPath = `${fileUrl.pathname}${fileUrl.search}`;
+  const mediaHeaders = {
+    Accept: "video/mp4,application/octet-stream,*/*",
+  };
   let received = 0;
-  const sizeLimit = new Transform({
-    transform(chunk: Buffer, _encoding, callback) {
-      received += chunk.length;
-      if (received > maxYoutubeDownloadBytes) {
-        callback(new Error("The Apify video is larger than 1.5 GB."));
-        return;
-      }
-      callback(null, chunk);
-    },
-  });
+  let lastError = "Apify returned an empty media response.";
 
   try {
-    await pipeline(Readable.fromWeb(mediaResponse.body as Parameters<typeof Readable.fromWeb>[0]), sizeLimit, createWriteStream(destination));
+    await unlink(tempPath).catch(() => undefined);
+
+    // First use the authenticated Replit connector proxy. The explicit binary
+    // Accept header is important because the connector defaults to JSON.
+    try {
+      const proxyResponse = await connectors.proxy("apify", mediaPath, {
+        method: "GET",
+        headers: mediaHeaders,
+      });
+      received = await writeApifyResponse(proxyResponse, tempPath);
+      if (!received) lastError = `Apify media proxy returned HTTP ${proxyResponse.status} with no bytes.`;
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : "Apify media proxy failed.";
+    }
+
+    // Some Railway deployments can reach the Actor proxy but receive an empty
+    // body for the key-value-store record. The returned Apify URL is signed,
+    // so retry it directly before reporting a failed download.
+    if (!received) {
+      await unlink(tempPath).catch(() => undefined);
+      const directResponse = await fetch(fileUrl.toString(), {
+        method: "GET",
+        headers: mediaHeaders,
+        redirect: "follow",
+      });
+      received = await writeApifyResponse(directResponse, tempPath);
+      if (!received) {
+        lastError = `Apify media download failed with HTTP ${directResponse.status}.`;
+      }
+    }
+
+    if (!received) throw new Error(lastError);
+    await rename(tempPath, destination);
+    const saved = await stat(destination);
+    if (saved.size <= 0) throw new Error("Apify saved an empty video file.");
   } catch (error) {
+    await unlink(tempPath).catch(() => undefined);
     await unlink(destination).catch(() => undefined);
     throw error;
   }
