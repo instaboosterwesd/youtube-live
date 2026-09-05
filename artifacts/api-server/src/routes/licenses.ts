@@ -17,11 +17,12 @@ type LicenseRecord = {
 type LicenseMap = Record<string, Omit<LicenseRecord, "id">>;
 
 function configuredOwnerPassword(): string {
-  return process.env.OWNER_PASSWORD?.trim() || "traderp1wer";
+  return process.env.OWNER_PASSWORD?.trim() || "";
 }
 
 function ownerAuthorized(req: Request): boolean {
-  return req.header("x-owner-password") === configuredOwnerPassword();
+  const expected = configuredOwnerPassword();
+  return Boolean(expected && req.header("x-owner-password") === expected);
 }
 
 function validClientId(value: unknown): value is string {

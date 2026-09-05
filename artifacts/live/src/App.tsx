@@ -225,7 +225,7 @@ function useWorkspace(license: LicenseSession | null, clearLicense: () => void) 
 function Brand({ compact = false }: { compact?: boolean }) {
   return <div className="brand" data-testid="brand">
     <div className="brand-mark"><Radio size={18} strokeWidth={2.5} /></div>
-    {!compact && <div><div className="brand-name">Signal Desk</div><div className="brand-note">local control room</div></div>}
+    {!compact && <div><div className="brand-name">Signal Desk</div><div className="brand-note">licensed control room</div></div>}
   </div>;
 }
 
@@ -247,7 +247,7 @@ function Sidebar({ path, open, onClose, user, onLogout, data }: { path:string; o
       <button className="nav-link" onClick={() => { onLogout(); onClose(); }} data-testid="button-sign-out"><ShieldCheck size={16}/><span>Sign out</span></button>
     </nav>
     <div className="sidebar-bottom">
-      <div className="workspace-card"><strong>Local workspace</strong><p>Your control room is saved in this browser. No data leaves this device.</p></div>
+      <div className="workspace-card"><strong>Private workspace</strong><p>Your control room is saved in your Firebase license workspace.</p></div>
       <div className="mini-user"><span className="avatar">{user.slice(0,2).toUpperCase()}</span><span style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{user}</span></div>
     </div>
   </aside>;
@@ -264,15 +264,6 @@ function AppShell({ children, title, workspace }: { children:ReactNode; title:st
   const [path] = useLocation();
   const [menu, setMenu] = useState(false);
   return <div className="shell"><Sidebar path={path} open={menu} onClose={()=>setMenu(false)} user={workspace.user} onLogout={workspace.logout} data={workspace.data}/><main className="main"><Header title={title} onMenu={()=>setMenu(true)}/>{children}</main>{workspace.toast && <div className="toast" data-testid="status-toast"><Check size={14} style={{verticalAlign:"-2px", marginRight:7}}/>{workspace.toast}</div>}</div>;
-}
-
-function Login({ onLogin }: { onLogin:(name:string)=>void }) {
-  const [name, setName] = useState(""); const [password, setPassword] = useState(""); const [error, setError] = useState("");
-  const submit = (e:FormEvent) => { e.preventDefault(); if (!name.trim()) return setError("Enter a name or email to continue."); if (password !== "dev") return setError("For this local demo, the password is dev."); onLogin(name.trim()); };
-  return <div className="login-page">
-    <section className="login-visual"><div className="login-logo"><div className="brand-mark"><Radio size={18}/></div><div><div className="brand-name">Signal Desk</div><div className="brand-note">local control room</div></div></div><div className="login-copy"><div className="signal-line"><span/>SYSTEM READY · 04:32:18 UTC</div><h1>Know what’s<br/><em>on air.</em></h1><p>A quiet, local command center for preparing a stream, keeping an eye on the room, and giving every recording a place to land.</p></div><div className="signal-line"><span/>BUILT FOR SMALL TEAMS · NO SERVER REQUIRED</div></section>
-    <section className="login-panel"><div className="login-card"><p className="eyebrow">Enter the control room</p><h2>Welcome back.</h2><p className="subtle">Use any name to open your local workspace. This is a demo environment, not production authentication.</p>{error && <div className="error-note" data-testid="status-login-error">{error}</div>}<form className="login-form" onSubmit={submit}><div className="field"><label htmlFor="login-name">Name or email</label><input id="login-name" data-testid="input-login-name" value={name} onChange={e=>setName(e.target.value)} placeholder="you@studio.local" autoComplete="username"/></div><div className="field"><label htmlFor="login-password">Demo password</label><input id="login-password" data-testid="input-login-password" type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="dev" autoComplete="current-password"/></div><button className="button login-submit" type="submit" data-testid="button-enter-room">Enter workspace <ArrowRight size={16}/></button></form><div className="demo-note"><ShieldCheck size={15}/><span><strong>Local demo.</strong> Your workspace persists in localStorage on this device. Password is <span className="mono">dev</span>.</span></div></div></section>
-  </div>;
 }
 
 function LicenseGate({ license, busy, error, onActivate, onRenew }: { license:LicenseSession|null; busy:boolean; error:string; onActivate:(key:string)=>Promise<void>; onRenew:()=>Promise<void> }) {
