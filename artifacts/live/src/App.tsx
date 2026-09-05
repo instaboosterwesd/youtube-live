@@ -293,7 +293,6 @@ function LicenseGate({ license, busy, error, onActivate, onRenew }: { license:Li
       </form>
       {expired && <button className="button secondary license-renew" onClick={()=>void onRenew()} disabled={busy} data-testid="button-renew-license">{busy ? "Renewing…" : "Renew your key · 30 days"} <Check size={14}/></button>}
       {license && <div className="license-status"><strong>{license.name}</strong><span>Key: <span className="mono">{license.key}</span></span><span>Expired {new Date(license.expiresAt).toLocaleDateString()}</span></div>}
-      <div className="demo-note"><ShieldCheck size={15}/><span>Workspace data is separated by license and browser. Owner access is available at <a href="/owner" className="section-link">/owner</a>.</span></div>
     </div></section>
   </div>;
 }
