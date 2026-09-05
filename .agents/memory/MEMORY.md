@@ -2,3 +2,4 @@
 - [YouTube HLS ingest](youtube-hls-ingest.md) — YouTube HLS templates require FFmpeg to PUT a playlist and individually named media segments through the file query parameter.
 - [YouTube downloader clients](youtube-downloader-clients.md) — some public videos fail yt-dlp's default client; keep the Android player-client fallback for downloads.
 - [Firebase licensing security](firebase-licensing-security.md) — public Realtime Database rules make app-level owner passwords non-secure; harden rules/auth before production.
+- [Public media builds](public-media-builds.md) — ignored local media must not be statically imported by the frontend; clean public checkouts should use runtime uploads/API media.
