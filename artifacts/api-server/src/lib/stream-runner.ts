@@ -15,6 +15,7 @@ export type StreamRunnerInput = {
   faceCategory?: string;
   faceSource?: string;
   faceSources?: string[];
+  playbackSpeed?: number;
   aspectRatio?: "shorts" | "full" | "square";
   facePosition?: "top-left" | "top-right" | "bottom-left" | "bottom-right" | "center";
   faceScale?: number;
@@ -134,7 +135,8 @@ function buildFfmpegArgs(
   }[aspectRatio];
   const [width, height] = dimensions;
   const facePath = faceInput?.path;
-  const needsVideoFilter = aspectRatio !== "full" || Boolean(facePath);
+  const playbackSpeed = Math.min(2, Math.max(0.5, input.playbackSpeed ?? 1));
+  const needsVideoFilter = aspectRatio !== "full" || Boolean(facePath) || playbackSpeed !== 1;
 
   const inputArgs = [
     "-hide_banner",
@@ -163,10 +165,10 @@ function buildFfmpegArgs(
     ? [
         "-filter_complex",
         [
-          `[0:v]scale=${width}:${height}:force_original_aspect_ratio=increase,crop=${width}:${height}[base]`,
+          `[0:v]${playbackSpeed === 1 ? "" : `setpts=PTS/${playbackSpeed},`}scale=${width}:${height}:force_original_aspect_ratio=increase,crop=${width}:${height}[base]`,
           ...(facePath
             ? [
-                `[1:v]scale=iw*${Math.min(0.6, Math.max(0.1, input.faceScale ?? 0.25))}:-1[face]`,
+                `[1:v]${playbackSpeed === 1 ? "" : `setpts=PTS/${playbackSpeed},`}scale=iw*${Math.min(0.6, Math.max(0.1, input.faceScale ?? 0.25))}:-1[face]`,
                 `[base][face]overlay=${
                   input.facePosition === "top-left" || input.facePosition === "bottom-left"
                     ? "24"
@@ -188,9 +190,17 @@ function buildFfmpegArgs(
         "-c:v",
         "libx264",
         "-preset",
-        "veryfast",
+        "faster",
         "-tune",
         "zerolatency",
+        "-crf",
+        "18",
+        "-maxrate",
+        aspectRatio === "shorts" ? "7M" : "10M",
+        "-bufsize",
+        aspectRatio === "shorts" ? "14M" : "20M",
+        "-profile:v",
+        "high",
         "-pix_fmt",
         "yuv420p",
         "-r",
@@ -200,7 +210,17 @@ function buildFfmpegArgs(
       ]
     : ["-map", "0:v:0", "-c:v", "copy"];
 
-  const audioArgs = ["-map", "0:a:0?", "-c:a", "aac", "-b:a", "128k", "-ar", "44100"];
+  const audioArgs = [
+    "-map",
+    "0:a:0?",
+    "-c:a",
+    "aac",
+    "-b:a",
+    "160k",
+    "-ar",
+    "44100",
+    ...(playbackSpeed === 1 ? [] : ["-af", `atempo=${playbackSpeed}`]),
+  ];
 
   if (ingestUrl.pathname.includes("http_upload_hls")) {
     const playlistUrl = setFile(ingestUrl, "signal_desk.m3u8");

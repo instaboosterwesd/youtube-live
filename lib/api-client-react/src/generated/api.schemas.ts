@@ -42,6 +42,11 @@ export interface StreamStartInput {
   faceCategory?: string;
   faceSource?: string;
   faceSources?: string[];
+  /**
+     * @minimum 0.5
+     * @maximum 2
+     */
+  playbackSpeed?: number;
   aspectRatio?: StreamStartInputAspectRatio;
   facePosition?: StreamStartInputFacePosition;
   /**

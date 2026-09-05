@@ -21,7 +21,7 @@ type FacePosition = "top-left" | "top-right" | "bottom-left" | "bottom-right" | 
 type LiveChannel = {
   id: string; title: string; platform: string; status: LiveStatus; groupId: string;
   streamUrl: string; streamKey: string; viewers: number; startedAt: string | null;
-  thumbnailColor: string; createdAt: string; aspectRatio?: AspectRatio; faceGroupId?: string;
+  thumbnailColor: string; createdAt: string; aspectRatio?: AspectRatio; playbackSpeed?: number; faceGroupId?: string;
   facePosition?: FacePosition; faceSize?: number; durationHours?: number; autoRestart?: boolean;
 };
 type VideoItem = {
@@ -225,6 +225,7 @@ function ChannelModal({ channel, groups, videos, onSave, onClose }: {channel?:Li
     groupId:channel?.groupId||"",
     streamUrl:channel?.streamUrl||"https://a.upload.youtube.com/http_upload_hls?cid=&copy=0&file=",
     aspectRatio:channel?.aspectRatio||"full" as AspectRatio,
+    playbackSpeed:channel?.playbackSpeed||1,
     faceGroupId:channel?.faceGroupId||"",
     facePosition:channel?.facePosition||"bottom-right" as FacePosition,
     faceSize:channel?.faceSize||25,
@@ -249,7 +250,7 @@ function ChannelModal({ channel, groups, videos, onSave, onClose }: {channel?:Li
       status:channel?.status||"stopped", groupId:form.groupId, streamUrl:form.streamUrl.trim(),
       streamKey:channel?.streamKey||"", viewers:channel?.viewers||0, startedAt:channel?.startedAt||null,
       thumbnailColor:channel?.thumbnailColor||colors[0], createdAt:channel?.createdAt||now(),
-      aspectRatio:form.aspectRatio, faceGroupId:form.faceGroupId || undefined,
+       aspectRatio:form.aspectRatio, playbackSpeed:Number(form.playbackSpeed), faceGroupId:form.faceGroupId || undefined,
       facePosition:form.facePosition, faceSize:Number(form.faceSize), durationHours:Number(form.durationHours),
       autoRestart:form.autoRestart,
     });
@@ -258,7 +259,8 @@ function ChannelModal({ channel, groups, videos, onSave, onClose }: {channel?:Li
     <div className="form-grid">
       <div className="field full"><label>Live URL</label><input autoFocus required value={form.streamUrl} onChange={e=>set("streamUrl",e.target.value)} placeholder="https://a.upload.youtube.com/http_upload_hls?...&file=" data-testid="input-stream-url"/></div>
       <div className="field"><label>Main video category</label><select required value={form.groupId} onChange={e=>set("groupId",e.target.value)} data-testid="select-channel-group"><option value="">Select a category</option>{groups.map(g=><option key={g.id} value={g.id}>{g.name}</option>)}</select></div>
-      <div className="field"><label>Stream shape</label><select value={form.aspectRatio} onChange={e=>set("aspectRatio",e.target.value as AspectRatio)} data-testid="select-channel-ratio"><option value="shorts">Shorts · 9:16 vertical</option><option value="full">Full · 16:9 landscape</option><option value="square">Square · 1:1</option></select></div>
+       <div className="field"><label>Live format</label><select value={form.aspectRatio} onChange={e=>set("aspectRatio",e.target.value as AspectRatio)} data-testid="select-channel-ratio"><option value="shorts">Shorts · 9:16 vertical</option><option value="full">Big live · 16:9 landscape</option><option value="square">Square · 1:1</option></select></div>
+       <div className="field"><label>Video speed</label><select value={form.playbackSpeed} onChange={e=>set("playbackSpeed",Number(e.target.value))} data-testid="select-channel-speed"><option value="0.5">0.5× slow</option><option value="0.75">0.75×</option><option value="1">1× normal</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option><option value="2">2× fast</option></select></div>
       <div className="field full"><label>Face video category <span className="label-optional">optional overlay</span></label><select value={form.faceGroupId} onChange={e=>set("faceGroupId",e.target.value)} data-testid="select-channel-face-group"><option value="">No face overlay</option>{groups.map(g=><option key={g.id} value={g.id}>{g.name}</option>)}</select></div>
       <div className="field"><label>Face position</label><select disabled={!form.faceGroupId} value={form.facePosition} onChange={e=>set("facePosition",e.target.value as FacePosition)} data-testid="select-face-position"><option value="top-left">Top left</option><option value="top-right">Top right</option><option value="bottom-left">Bottom left</option><option value="bottom-right">Bottom right</option><option value="center">Center</option></select></div>
       <div className="field"><label>Face size · {form.faceSize}%</label><input disabled={!form.faceGroupId} type="range" min="10" max="60" step="1" value={form.faceSize} onChange={e=>set("faceSize",Number(e.target.value))} data-testid="input-face-size"/></div>
@@ -294,7 +296,7 @@ function LivePage({workspace}:{workspace:ReturnType<typeof useWorkspace>}) {
        videoSources:mainVideos.map(video=>video.serverSource).filter((source): source is string=>Boolean(source)),
        faceCategory, faceSource:faceVideo?.serverSource,
        faceSources:faceVideos.map(video=>video.serverSource).filter((source): source is string=>Boolean(source)),
-      aspectRatio:c.aspectRatio||"full", facePosition:c.facePosition||"bottom-right",
+       playbackSpeed:c.playbackSpeed||1, aspectRatio:c.aspectRatio||"full", facePosition:c.facePosition||"bottom-right",
       faceScale:(c.faceSize||25)/100, durationMinutes:(c.durationHours||1)*60,
       autoRestart:Boolean(c.autoRestart),
     });

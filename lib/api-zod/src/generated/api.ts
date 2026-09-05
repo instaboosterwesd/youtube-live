@@ -25,6 +25,10 @@ export const HealthCheckResponse = zod.object({
 
 
 
+export const startStreamBodyPlaybackSpeedDefault = 1;
+export const startStreamBodyPlaybackSpeedMin = 0.5;
+export const startStreamBodyPlaybackSpeedMax = 2;
+
 export const startStreamBodyAspectRatioDefault = `full`;
 export const startStreamBodyFacePositionDefault = `bottom-right`;
 export const startStreamBodyFaceScaleDefault = 0.25;
@@ -44,6 +48,7 @@ export const StartStreamBody = zod.object({
   "faceCategory": zod.string().optional(),
   "faceSource": zod.string().optional(),
   "faceSources": zod.array(zod.string()).optional(),
+  "playbackSpeed": zod.number().min(startStreamBodyPlaybackSpeedMin).max(startStreamBodyPlaybackSpeedMax).default(startStreamBodyPlaybackSpeedDefault),
   "aspectRatio": zod.enum(['shorts', 'full', 'square']).default(startStreamBodyAspectRatioDefault),
   "facePosition": zod.enum(['top-left', 'top-right', 'bottom-left', 'bottom-right', 'center']).default(startStreamBodyFacePositionDefault),
   "faceScale": zod.number().min(startStreamBodyFaceScaleMin).max(startStreamBodyFaceScaleMax).default(startStreamBodyFaceScaleDefault),

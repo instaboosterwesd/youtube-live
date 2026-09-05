@@ -201,6 +201,11 @@ components:
           type: array
           items:
             type: string
+        playbackSpeed:
+          type: number
+          minimum: 0.5
+          maximum: 2
+          default: 1
         aspectRatio:
           type: string
           enum: [shorts, full, square]
