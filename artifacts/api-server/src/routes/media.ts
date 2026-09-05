@@ -10,6 +10,7 @@ import { DownloadYoutubeVideoBody, DownloadYoutubeVideoResponse } from "@workspa
 const router: IRouter = Router();
 const mediaDir = path.resolve(process.cwd(), "attached_assets", "live-media");
 const maxUploadBytes = 1.5 * 1024 * 1024 * 1024;
+const ytDlpCommand = process.env.YT_DLP_BIN?.trim() || "yt-dlp";
 
 function getMediaName(rawName: string): string {
   const base = path.basename(rawName).replace(/[^a-zA-Z0-9._-]/g, "-");
@@ -53,7 +54,7 @@ async function downloadYoutubeVideo(url: string, fileId: string): Promise<{ path
   await mkdir(mediaDir, { recursive: true });
   const outputTemplate = path.join(mediaDir, `${fileId}.%(ext)s`);
   return new Promise((resolve, reject) => {
-    const child = spawn("yt-dlp", [
+    const child = spawn(ytDlpCommand, [
       "--no-playlist",
       "--no-warnings",
       "--no-progress",
@@ -69,7 +70,13 @@ async function downloadYoutubeVideo(url: string, fileId: string): Promise<{ path
     let stderr = "";
     child.stdout.on("data", (chunk: Buffer) => { stdout += chunk.toString(); });
     child.stderr.on("data", (chunk: Buffer) => { stderr += chunk.toString(); });
-    child.on("error", (error) => reject(error));
+    child.on("error", (error: NodeJS.ErrnoException) => {
+      if (error.code === "ENOENT") {
+        reject(new Error("The server is missing yt-dlp. Install yt-dlp and ffmpeg, then redeploy."));
+        return;
+      }
+      reject(error);
+    });
     child.on("close", async (code) => {
       if (code !== 0) {
         reject(new Error(stderr.trim().split("\n").filter(Boolean).at(-1) || "YouTube download failed."));
@@ -148,7 +155,7 @@ router.post("/media/youtube-download", async (req, res): Promise<void> => {
   } catch (error) {
     const message = error instanceof Error ? error.message : "The YouTube video could not be downloaded.";
     req.log.warn({ error: message }, "YouTube download failed");
-    res.status(400).json({ error: message });
+    res.status(message.includes("missing yt-dlp") ? 503 : 400).json({ error: message });
   }
 });
 
