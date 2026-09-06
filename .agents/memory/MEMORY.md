@@ -8,4 +8,3 @@
 - [Public media builds](public-media-builds.md) — ignored local media must not be statically imported by the frontend; clean public checkouts should use runtime uploads/API media.
 - [Railway project access](railway-project-access.md) — Railway CLI can be authenticated while no project is available; Personal workspace creation may require an upgrade.
 - [YTSave downloader provider](youtube-ytsave-provider.md) — use a fresh PHP session and client HMAC mint before requesting YTSave media URLs.
-- [Apify YouTube downloads](apify-youtube-downloader.md) — Apify returns a temporary key-value-store MP4 URL; download it immediately through the authenticated connector.

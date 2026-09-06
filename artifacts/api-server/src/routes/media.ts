@@ -7,7 +7,6 @@ import { Router, type IRouter, type Request } from "express";
 import { createHmac, randomUUID } from "node:crypto";
 import os from "node:os";
 import { DownloadYoutubeVideoBody, DownloadYoutubeVideoResponse } from "@workspace/api-zod";
-import { ReplitConnectors } from "@replit/connectors-sdk";
 import youtubeDl, { create as createYoutubeDl } from "youtube-dl-exec";
 import ffmpegPath from "ffmpeg-static";
 import { authorizeLicenseSession } from "./licenses";
@@ -183,135 +182,6 @@ type YtSaveResponse = {
   message?: unknown;
 };
 
-type ApifyVideoResult = {
-  downloadedFileUrl?: unknown;
-  fileKey?: unknown;
-  title?: unknown;
-  durationSeconds?: unknown;
-};
-
-async function writeApifyResponse(response: Response, destination: string): Promise<number> {
-  if (!response.ok || !response.body) return 0;
-
-  const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
-  if (contentType.includes("application/json") || contentType.includes("text/html") || contentType.includes("text/plain")) {
-    throw new Error("Apify returned an error response instead of a video file.");
-  }
-
-  const contentLength = Number(response.headers.get("content-length"));
-  if (Number.isFinite(contentLength) && contentLength > maxYoutubeDownloadBytes) {
-    throw new Error("The Apify video is larger than the server storage limit.");
-  }
-
-  let received = 0;
-  const sizeLimit = new Transform({
-    transform(chunk: Buffer, _encoding, callback) {
-      received += chunk.length;
-      if (received > maxYoutubeDownloadBytes) {
-        callback(new Error("The Apify video is larger than 1.5 GB."));
-        return;
-      }
-      callback(null, chunk);
-    },
-  });
-
-  await pipeline(
-    Readable.fromWeb(response.body as Parameters<typeof Readable.fromWeb>[0]),
-    sizeLimit,
-    createWriteStream(destination, { mode: 0o600 }),
-  );
-  return received;
-}
-
-async function downloadWithApify(url: string, fileId: string): Promise<{ path: string; title: string; duration: string }> {
-  const connectors = new ReplitConnectors();
-  const actorResponse = await connectors.proxy(
-    "apify",
-    "/v2/actors/streamers~youtube-video-downloader/run-sync-get-dataset-items?format=json&clean=true",
-    {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ videos: [{ url }] }),
-    },
-  );
-
-  if (!actorResponse.ok) {
-    const details = (await actorResponse.text()).trim().slice(-500);
-    throw new Error(`Apify downloader failed with HTTP ${actorResponse.status}.${details ? ` ${details}` : ""}`);
-  }
-
-  const items = (await actorResponse.json()) as unknown;
-  const result = Array.isArray(items) ? (items[0] as ApifyVideoResult | undefined) : undefined;
-  const downloadedFileUrl = typeof result?.downloadedFileUrl === "string" ? result.downloadedFileUrl : "";
-  if (!downloadedFileUrl) throw new Error("Apify did not return a downloadable video file.");
-
-  const fileUrl = new URL(downloadedFileUrl);
-  if (fileUrl.hostname !== "api.apify.com") {
-    throw new Error("Apify returned an unexpected media host.");
-  }
-
-  await mkdir(mediaDir, { recursive: true });
-  const destination = path.join(mediaDir, `${fileId}.mp4`);
-  const tempPath = `${destination}.part`;
-  const mediaPath = `${fileUrl.pathname}${fileUrl.search}`;
-  const mediaHeaders = {
-    Accept: "video/mp4,application/octet-stream,*/*",
-  };
-  let received = 0;
-  let lastError = "Apify returned an empty media response.";
-
-  try {
-    await unlink(tempPath).catch(() => undefined);
-
-    // First use the authenticated Replit connector proxy. The explicit binary
-    // Accept header is important because the connector defaults to JSON.
-    try {
-      const proxyResponse = await connectors.proxy("apify", mediaPath, {
-        method: "GET",
-        headers: mediaHeaders,
-      });
-      received = await writeApifyResponse(proxyResponse, tempPath);
-      if (!received) lastError = `Apify media proxy returned HTTP ${proxyResponse.status} with no bytes.`;
-    } catch (error) {
-      lastError = error instanceof Error ? error.message : "Apify media proxy failed.";
-    }
-
-    // Some Railway deployments can reach the Actor proxy but receive an empty
-    // body for the key-value-store record. The returned Apify URL is signed,
-    // so retry it directly before reporting a failed download.
-    if (!received) {
-      await unlink(tempPath).catch(() => undefined);
-      const directResponse = await fetch(fileUrl.toString(), {
-        method: "GET",
-        headers: mediaHeaders,
-        redirect: "follow",
-      });
-      received = await writeApifyResponse(directResponse, tempPath);
-      if (!received) {
-        lastError = `Apify media download failed with HTTP ${directResponse.status}.`;
-      }
-    }
-
-    if (!received) throw new Error(lastError);
-    await rename(tempPath, destination);
-    const saved = await stat(destination);
-    if (saved.size <= 0) throw new Error("Apify saved an empty video file.");
-  } catch (error) {
-    await unlink(tempPath).catch(() => undefined);
-    await unlink(destination).catch(() => undefined);
-    throw error;
-  }
-
-  const rawTitle = typeof result?.title === "string" ? result.title.trim() : "";
-  const fileKey = typeof result?.fileKey === "string" ? result.fileKey : "";
-  const fallbackTitle = fileKey.replace(/\.mp4$/i, "").replace(/^[^_]+_/, "").trim();
-  return {
-    path: destination,
-    title: rawTitle || fallbackTitle || "Downloaded YouTube video",
-    duration: formatDuration(result?.durationSeconds),
-  };
-}
-
 async function downloadWithYtSave(url: string, fileId: string): Promise<{ path: string; title: string; duration: string }> {
   const requestHeaders = {
     "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/131 Safari/537.36",
@@ -424,14 +294,33 @@ async function downloadWithYtSave(url: string, fileId: string): Promise<{ path: 
     if (!videoResponse.ok || !videoResponse.body) {
       throw new Error(`YTSave video fetch failed with HTTP ${videoResponse.status}.`);
     }
+    const contentType = videoResponse.headers.get("content-type")?.toLowerCase() ?? "";
+    if (contentType.includes("application/json") || contentType.includes("text/html") || contentType.includes("text/plain")) {
+      throw new Error("YTSave returned an error response instead of a video file.");
+    }
     const contentLength = Number(videoResponse.headers.get("content-length"));
     if (Number.isFinite(contentLength) && contentLength > maxYoutubeDownloadBytes) {
       throw new Error("The YTSave video is larger than the server storage limit.");
     }
+    let received = 0;
+    const sizeLimit = new Transform({
+      transform(chunk: Buffer, _encoding, callback) {
+        received += chunk.length;
+        if (received > maxYoutubeDownloadBytes) {
+          callback(new Error("The YTSave video is larger than 1.5 GB."));
+          return;
+        }
+        callback(null, chunk);
+      },
+    });
     await pipeline(
       Readable.fromWeb(videoResponse.body as Parameters<typeof Readable.fromWeb>[0]),
+      sizeLimit,
       createWriteStream(tempPath, { mode: 0o600 }),
     );
+    if (received <= 0) throw new Error("YTSave returned an empty video file.");
+    const saved = await stat(tempPath);
+    if (saved.size <= 0) throw new Error("YTSave saved an empty video file.");
     await rename(tempPath, outputPath);
   } catch (error) {
     await unlink(tempPath).catch(() => undefined);
@@ -465,7 +354,11 @@ async function downloadWithYtDlp(url: string, fileId: string): Promise<{ path: s
       output: outputTemplate,
       printJson: true,
     } as unknown) as Parameters<typeof youtubeDownloader.exec>[1];
-    const child = youtubeDownloader.exec(url, flags);
+    const child = youtubeDownloader.exec(
+      url,
+      flags,
+      { reject: false } as unknown as Parameters<typeof youtubeDownloader.exec>[2],
+    );
     let stdout = "";
     let stderr = "";
     child.stdout?.on("data", (chunk: Buffer) => { stdout += chunk.toString(); });
@@ -497,8 +390,8 @@ async function downloadWithYtDlp(url: string, fileId: string): Promise<{ path: s
 
 async function downloadYoutubeVideo(url: string, fileId: string): Promise<{ path: string; title: string; duration: string }> {
   try {
-    return await downloadWithApify(url, fileId);
-  } catch (apifyError) {
+    return await downloadWithYtSave(url, fileId);
+  } catch (ytSaveError) {
     await Promise.all(
       (await readdir(mediaDir).catch(() => []))
         .filter((entry) => entry.startsWith(`${fileId}.`))
@@ -506,22 +399,11 @@ async function downloadYoutubeVideo(url: string, fileId: string): Promise<{ path
     );
 
     try {
-      return await downloadWithYtSave(url, fileId);
-    } catch (ytSaveError) {
-      await Promise.all(
-        (await readdir(mediaDir).catch(() => []))
-          .filter((entry) => entry.startsWith(`${fileId}.`))
-          .map((entry) => unlink(path.join(mediaDir, entry)).catch(() => undefined)),
-      );
-
-      try {
-        return await downloadWithYtDlp(url, fileId);
-      } catch (ytDlpError) {
-        const apifyMessage = apifyError instanceof Error ? apifyError.message : "Apify failed.";
-        const ytSaveMessage = ytSaveError instanceof Error ? ytSaveError.message : "YTSave failed.";
-        const ytDlpMessage = ytDlpError instanceof Error ? ytDlpError.message : "yt-dlp failed.";
-        throw new Error(`Apify: ${apifyMessage} | YTSave: ${ytSaveMessage} | yt-dlp: ${ytDlpMessage}`);
-      }
+      return await downloadWithYtDlp(url, fileId);
+    } catch (ytDlpError) {
+      const ytSaveMessage = ytSaveError instanceof Error ? ytSaveError.message : "YTSave failed.";
+      const ytDlpMessage = ytDlpError instanceof Error ? ytDlpError.message : "yt-dlp failed.";
+      throw new Error(`YTSave: ${ytSaveMessage} | yt-dlp: ${ytDlpMessage}`);
     }
   }
 }
@@ -642,7 +524,7 @@ router.post("/media/youtube-download", async (req, res): Promise<void> => {
     const message = missingDownloader
       ? "The bundled YouTube downloader is unavailable. Redeploy the latest build and try again."
       : requiresYoutubeCookies
-        ? "YouTube requires authentication for this server. Configure YOUTUBE_COOKIES_FILE or the YOUTUBE_COOKIES_B64 secret in Railway, then redeploy."
+        ? "YouTube requires authentication on this server. Add a cookies.txt file in YouTube settings or configure YOUTUBE_COOKIES_FILE/YOUTUBE_COOKIES_B64, then try again."
       : rawMessage;
     req.log.warn({ error: message }, "YouTube download failed");
     res.status(missingDownloader || requiresYoutubeCookies ? 503 : 400).json({ error: message });
